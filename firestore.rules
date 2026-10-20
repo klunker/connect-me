@@ -1,0 +1,216 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users/{uid}
+    // Document ID: Firebase Auth UID
+    // Fields:
+    //   - displayName: string (required, 1..60 chars)
+    //   - email: string (optional, valid email format)
+    //   - phone: string (optional, 5..25 chars)
+    //   - pushToken: string (optional, 0..255 chars)
+    //   - reliabilityScore: number (optional, 0.0 .. 1.0)
+    //   - createdAt: timestamp (required on create, immutable)
+    //   - updatedAt: timestamp (required on update)
+    //
+    // Collection: events/{eventId}
+    // Document ID: Auto-generated string
+    // Fields:
+    //   - title: string (required, 1..100 chars)
+    //   - description: string (optional, 0..1000 chars)
+    //   - location: string (required, 1..200 chars)
+    //   - dateTime: timestamp (required)
+    //   - creatorId: string (required, matches auth.uid of creator, immutable)
+    //   - creatorName: string (required, 1..60 chars) - denormalized for public display
+    //   - requiredCount: number (required, integer 1..100)
+    //   - isRecurring: bool (required)
+    //   - recurrenceRule: string (optional, e.g. "weekly:thursday", 0..50 chars)
+    //   - parentEventId: string (optional, nullable)
+    //   - status: string (required: 'open' | 'confirmed' | 'cancelled' | 'past')
+    //   - delegatedTo: string (optional, nullable, user UID)
+    //   - createdAt: timestamp (required on create, immutable)
+    //   - updatedAt: timestamp (required on update)
+    //
+    // Collection: events/{eventId}/participants/{participantId}
+    // Document ID: Auth UID (or anonymous auth UID)
+    // Fields:
+    //   - userId: string (required, matches auth.uid, immutable)
+    //   - displayName: string (required, 1..60 chars)
+    //   - status: string (required: 'going' | 'not_going' | 'confirmed' | 'attended' | 'no_show')
+    //   - isGuest: bool (required)
+    //   - respondedAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAnonymous() {
+      return isAuthenticated() && request.auth.token.firebase.sign_in_provider == 'anonymous';
+    }
+
+    function isRegisteredUser() {
+      return isAuthenticated() && !isAnonymous();
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function validStringLength(text, minLen, maxLen) {
+      return text is string && text.size() >= minLen && text.size() <= maxLen;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+
+    // ---------------------------------------------------------------
+    // USERS
+    // ---------------------------------------------------------------
+    match /users/{userId} {
+      function isValidUserFields(data) {
+        return data.keys().hasOnly(['displayName', 'email', 'phone', 'pushToken', 'reliabilityScore', 'createdAt', 'updatedAt']) &&
+               data.keys().hasAll(['displayName', 'createdAt']) &&
+               validStringLength(data.displayName, 1, 60) &&
+               (!('email' in data) || data.email == null || isValidEmail(data.email)) &&
+               (!('phone' in data) || data.phone == null || validStringLength(data.phone, 5, 25)) &&
+               (!('pushToken' in data) || data.pushToken == null || (data.pushToken is string && data.pushToken.size() <= 255)) &&
+               (!('reliabilityScore' in data) || data.reliabilityScore == null || (data.reliabilityScore is number && data.reliabilityScore >= 0 && data.reliabilityScore <= 1)) &&
+               data.createdAt is timestamp &&
+               (!('updatedAt' in data) || data.updatedAt is timestamp);
+      }
+
+      // Read is restricted to owner to protect private PII (email, phone, pushToken)
+      allow read: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isRegisteredUser() &&
+                       isValidUserFields(request.resource.data);
+
+      allow update: if isOwner(userId) &&
+                       isValidUserFields(request.resource.data) &&
+                       request.resource.data.createdAt == resource.data.createdAt;
+
+      allow delete: if false; // Users cannot be deleted directly via client
+    }
+
+    // ---------------------------------------------------------------
+    // EVENTS
+    // ---------------------------------------------------------------
+    match /events/{eventId} {
+      function isValidEventStatus(status) {
+        return status in ['open', 'confirmed', 'cancelled', 'past'];
+      }
+
+      function isValidEventData(data) {
+        return data.keys().hasAll(['title', 'location', 'dateTime', 'creatorId', 'creatorName', 'requiredCount', 'isRecurring', 'status', 'createdAt']) &&
+               data.keys().hasOnly(['title', 'description', 'location', 'dateTime', 'creatorId', 'creatorName', 'requiredCount', 'isRecurring', 'recurrenceRule', 'parentEventId', 'status', 'delegatedTo', 'createdAt', 'updatedAt']) &&
+               validStringLength(data.title, 1, 100) &&
+               (!('description' in data) || data.description == null || (data.description is string && data.description.size() <= 1000)) &&
+               validStringLength(data.location, 1, 200) &&
+               data.dateTime is timestamp &&
+               validStringLength(data.creatorId, 1, 128) &&
+               validStringLength(data.creatorName, 1, 60) &&
+               data.requiredCount is int && data.requiredCount >= 1 && data.requiredCount <= 100 &&
+               data.isRecurring is bool &&
+               (!('recurrenceRule' in data) || data.recurrenceRule == null || (data.recurrenceRule is string && data.recurrenceRule.size() <= 50)) &&
+               (!('parentEventId' in data) || data.parentEventId == null || (data.parentEventId is string && data.parentEventId.size() <= 128)) &&
+               isValidEventStatus(data.status) &&
+               (!('delegatedTo' in data) || data.delegatedTo == null || (data.delegatedTo is string && data.delegatedTo.size() <= 128)) &&
+               data.createdAt is timestamp &&
+               (!('updatedAt' in data) || data.updatedAt is timestamp);
+      }
+
+      function isEventManager() {
+        return isAuthenticated() && (
+          request.auth.uid == resource.data.creatorId ||
+          (resource.data.delegatedTo != null && request.auth.uid == resource.data.delegatedTo)
+        );
+      }
+
+      // Public read so guests can view the event page on GitHub Pages without login
+      allow read: if true;
+
+      // Only registered users can create events
+      allow create: if isRegisteredUser() &&
+                       request.resource.data.creatorId == request.auth.uid &&
+                       isValidEventData(request.resource.data);
+
+      // Event creator or delegated manager can update
+      allow update: if isEventManager() &&
+                       isValidEventData(request.resource.data) &&
+                       request.resource.data.creatorId == resource.data.creatorId &&
+                       request.resource.data.createdAt == resource.data.createdAt;
+
+      // Only original creator can delete the event
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.creatorId;
+
+      // -------------------------------------------------------------
+      // PARTICIPANTS (Subcollection: events/{eventId}/participants/{participantId})
+      // -------------------------------------------------------------
+      match /participants/{participantId} {
+        function isValidParticipantStatus(status) {
+          return status in ['going', 'not_going', 'confirmed', 'attended', 'no_show'];
+        }
+
+        function isValidParticipantData(data) {
+          return data.keys().hasAll(['userId', 'displayName', 'status', 'isGuest', 'respondedAt']) &&
+                 data.keys().hasOnly(['userId', 'displayName', 'status', 'isGuest', 'respondedAt']) &&
+                 validStringLength(data.userId, 1, 128) &&
+                 validStringLength(data.displayName, 1, 60) &&
+                 isValidParticipantStatus(data.status) &&
+                 data.isGuest is bool &&
+                 data.respondedAt is timestamp;
+        }
+
+        function isParentEventManager() {
+          let eventDoc = get(/databases/$(database)/documents/events/$(eventId));
+          return isAuthenticated() && (
+            request.auth.uid == eventDoc.data.creatorId ||
+            (eventDoc.data.delegatedTo != null && request.auth.uid == eventDoc.data.delegatedTo)
+          );
+        }
+
+        // Public read so participants and counts are visible to guests and users
+        allow read: if true;
+
+        // Create: both anonymous guests and registered users can join
+        // participantId must match request.auth.uid to prevent ID spoofing
+        allow create: if isAuthenticated() &&
+                         participantId == request.auth.uid &&
+                         request.resource.data.userId == request.auth.uid &&
+                         isValidParticipantData(request.resource.data) &&
+                         (
+                           (isAnonymous() && request.resource.data.isGuest == true && request.resource.data.status in ['going', 'not_going']) ||
+                           (!isAnonymous() && request.resource.data.isGuest == false && request.resource.data.status in ['going', 'not_going', 'confirmed'])
+                         );
+
+        // Update:
+        // 1. Participant can update their own response (name, status: going/not_going/confirmed)
+        // 2. Event manager can update status (e.g. mark attended / no_show)
+        allow update: if isAuthenticated() &&
+                         isValidParticipantData(request.resource.data) &&
+                         request.resource.data.userId == resource.data.userId &&
+                         request.resource.data.isGuest == resource.data.isGuest &&
+                         (
+                           (request.auth.uid == resource.data.userId &&
+                            request.resource.data.status in ['going', 'not_going', 'confirmed']) ||
+                           isParentEventManager()
+                         );
+
+        // Delete: Participant can remove themselves or event manager can remove
+        allow delete: if isAuthenticated() && (
+          request.auth.uid == resource.data.userId ||
+          isParentEventManager()
+        );
+      }
+    }
+  }
+}

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ConnectMe — Event & Attendance</title>
+  <meta name="description" content="RSVP and view quorum status for events easily with ConnectMe.">
+  <meta name="theme-color" content="#0b0f19">
+
+  <!-- Google Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <a href="#" class="brand">
+        <div class="brand-icon">C</div>
+        <span class="brand-text">ConnectMe</span>
+      </a>
+
+      <!-- Language Selector -->
+      <nav class="lang-selector" aria-label="Language selection">
+        <button class="lang-btn" data-lang="en" onclick="switchLanguage('en')">EN</button>
+        <button class="lang-btn" data-lang="pl" onclick="switchLanguage('pl')">PL</button>
+        <button class="lang-btn" data-lang="uk" onclick="switchLanguage('uk')">UA</button>
+        <button class="lang-btn" data-lang="ru" onclick="switchLanguage('ru')">RU</button>
+      </nav>
+    </header>
+
+    <!-- Loading State -->
+    <div id="loading-state" class="view-state">
+      <div class="spinner"></div>
+      <p data-i18n="loading">Loading event details...</p>
+    </div>
+
+    <!-- Error State (Event Not Found) -->
+    <div id="error-state" class="view-state hidden">
+      <div class="card" style="width: 100%; text-align: center;">
+        <h2 data-i18n="notFoundTitle" style="color: #ef4444;">Event Not Found</h2>
+        <p data-i18n="notFoundDesc" style="color: var(--text-muted); font-size: 14px;">The event link may be invalid, expired, or deleted by the organizer.</p>
+        <p data-i18n="checkUrl" style="color: var(--text-subtle); font-size: 13px;">Please check the URL or ask the organizer for a new link.</p>
+      </div>
+    </div>
+
+    <!-- Event Content (Loaded) -->
+    <main id="event-content" class="hidden" style="display: flex; flex-direction: column; gap: 16px;">
+
+      <!-- Event Header Card -->
+      <section class="card" id="event-main-card">
+        <div class="badge-row">
+          <div id="event-status-badge" class="status-badge open">
+            <span class="pulse-dot"></span>
+            <span id="event-status-text">Open for RSVP</span>
+          </div>
+        </div>
+
+        <h1 id="event-title" class="event-title"></h1>
+        <p id="event-description" class="event-description hidden"></p>
+
+        <!-- Meta Details -->
+        <div class="meta-list">
+          <div class="meta-item">
+            <div class="meta-icon">👤</div>
+            <div class="meta-content">
+              <span class="meta-label" data-i18n="organizer">Organized by</span>
+              <span id="event-organizer" class="meta-value"></span>
+            </div>
+          </div>
+
+          <div class="meta-item">
+            <div class="meta-icon">📅</div>
+            <div class="meta-content">
+              <span class="meta-label" data-i18n="when">When</span>
+              <span id="event-date" class="meta-value"></span>
+            </div>
+          </div>
+
+          <div class="meta-item">
+            <div class="meta-icon">📍</div>
+            <div class="meta-content">
+              <span class="meta-label" data-i18n="where">Where</span>
+              <span id="event-location" class="meta-value"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quorum Tracker -->
+        <div class="quorum-box">
+          <div class="quorum-header">
+            <span class="quorum-title" data-i18n="quorum">Quorum Status</span>
+            <div id="quorum-numbers" class="quorum-numbers">
+              <span class="accent">0</span> / 10 people
+            </div>
+          </div>
+          <div class="progress-bar">
+            <div id="quorum-fill" class="progress-fill" style="width: 0%;"></div>
+          </div>
+          <div class="quorum-footer">
+            <span id="quorum-footer"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- RSVP Action Form Card -->
+      <section class="card rsvp-card" id="rsvp-section">
+        <h2 class="card-title" data-i18n="yourResponse">Your RSVP</h2>
+
+        <!-- Active response banner (if already answered) -->
+        <div id="current-rsvp-banner" class="hidden">
+          <span id="current-rsvp-text"></span>
+          <button id="btn-change-rsvp" class="btn btn-outline" style="padding: 6px 12px; font-size: 13px;" data-i18n="changeRsvp">Change</button>
+        </div>
+
+        <!-- Input & Buttons Form -->
+        <div id="rsvp-form" style="display: flex; flex-direction: column; gap: 14px;">
+          <div class="form-group">
+            <label for="participant-name-input" class="form-label" data-i18n="enterYourName">Enter your name</label>
+            <input
+              type="text"
+              id="participant-name-input"
+              class="input-text"
+              maxlength="60"
+              autocomplete="name"
+              data-i18n-placeholder="namePlaceholder"
+              placeholder="e.g. Alex M."
+            />
+          </div>
+
+          <div class="btn-group">
+            <button id="btn-going" class="btn btn-primary" type="button">
+              <span>👍</span>
+              <span data-i18n="goingBtn">I'm Going</span>
+            </button>
+            <button id="btn-not-going" class="btn btn-danger" type="button">
+              <span>👎</span>
+              <span data-i18n="notGoingBtn">Can't Go</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Participants List Card -->
+      <section class="card" id="participants-section">
+        <h2 class="card-title" data-i18n="participants">Participants</h2>
+
+        <div class="participants-tabs" role="tablist">
+          <button id="tab-going" class="tab-btn active" type="button">
+            <span data-i18n="tabGoing">Going</span>
+            <span id="tab-going-count" class="tab-count">0</span>
+          </button>
+          <button id="tab-not-going" class="tab-btn" type="button">
+            <span data-i18n="tabNotGoing">Can't Go</span>
+            <span id="tab-not-going-count" class="tab-count">0</span>
+          </button>
+        </div>
+
+        <ul id="participants-list" class="participants-list">
+          <!-- Populated by JS -->
+        </ul>
+      </section>
+
+      <!-- Install ConnectMe App CTA -->
+      <aside class="card install-card">
+        <h3 data-i18n="installTitle">Never miss a game with the ConnectMe app</h3>
+        <p data-i18n="installSubtitle">Create events, get instant notifications, and track your attendance reliability score.</p>
+        <a id="btn-install-app" href="connectme://event" class="btn-install">
+          <span>📲</span>
+          <span data-i18n="installBtn">Open / Install ConnectMe</span>
+        </a>
+        <p style="font-size: 11px; color: var(--text-subtle);" data-i18n="deepLinkInfo">
+          If the app is installed, it will open directly.
+        </p>
+      </aside>
+
+    </main>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Main JavaScript App (ES Module) -->
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

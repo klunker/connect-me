@@ -1,0 +1,50 @@
+{
+  "test_event_id": "demo-basketball-001",
+  "event_document": {
+    "title": "Баскетбол 5х5 на площадке",
+    "description": "Собираемся на открытой площадке. Возьмите сменную обувь и воду.",
+    "location": "ул. Спортивная, 10, спортплощадка №2",
+    "dateTime": "2026-10-25T18:00:00Z",
+    "creatorId": "test_creator_uid_123",
+    "creatorName": "Алексей (Организатор)",
+    "requiredCount": 10,
+    "isRecurring": true,
+    "recurrenceRule": "weekly:thursday",
+    "parentEventId": null,
+    "status": "open",
+    "delegatedTo": null,
+    "createdAt": "2026-10-20T20:00:00Z"
+  },
+  "participants_subcollection": [
+    {
+      "participant_doc_id": "test_creator_uid_123",
+      "data": {
+        "userId": "test_creator_uid_123",
+        "displayName": "Алексей",
+        "status": "going",
+        "isGuest": false,
+        "respondedAt": "2026-10-20T20:01:00Z"
+      }
+    },
+    {
+      "participant_doc_id": "sample_user_456",
+      "data": {
+        "userId": "sample_user_456",
+        "displayName": "Михаил",
+        "status": "going",
+        "isGuest": false,
+        "respondedAt": "2026-10-20T20:05:00Z"
+      }
+    },
+    {
+      "participant_doc_id": "guest_anon_789",
+      "data": {
+        "userId": "guest_anon_789",
+        "displayName": "Иван (гость)",
+        "status": "going",
+        "isGuest": true,
+        "respondedAt": "2026-10-20T20:10:00Z"
+      }
+    }
+  ]
+}
