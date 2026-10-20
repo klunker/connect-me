@@ -139,6 +139,12 @@ body {
   gap: 16px;
 }
 
+/* Extra spacing between cards */
+.card {
+  margin-bottom: 24px;
+}
+
+
 /* Status badge */
 .badge-row {
   display: flex;

@@ -138,8 +138,8 @@ service cloud.firestore {
       // Public read so guests can view the event page on GitHub Pages without login
       allow read: if true;
 
-      // Only registered users can create events
-      allow create: if isRegisteredUser() &&
+      // Any authenticated user (including anonymous) can create events
+      allow create: if isAuthenticated() &&
                        request.resource.data.creatorId == request.auth.uid &&
                        isValidEventData(request.resource.data);
 

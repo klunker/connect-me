@@ -165,12 +165,12 @@ export default function CreateOrEditEventScreen() {
               text: t("shareLink"),
               onPress: async () => {
                 await handleShare(newId);
-                router.replace(`/event/${newId}`);
+                router.replace("/(tabs)");
               },
             },
             {
               text: "OK",
-              onPress: () => router.replace(`/event/${newId}`),
+              onPress: () => router.replace("/(tabs)"),
             },
           ]
         );
