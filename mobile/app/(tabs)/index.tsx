@@ -222,7 +222,7 @@ export default function MyEventsScreen() {
                 <View style={styles.quorumContainer}>
                   <View style={styles.quorumRow}>
                     <Text style={styles.quorumLabel}>
-                      {t("needed")}: <Text style={styles.quorumNum}>{required} {t("people")}</Text>
+                      {t("needed")}: <Text style={styles.quorumNum}>{going} / {required} {t("people")}</Text>
                     </Text>
                     <Text style={styles.spotsLeftText}>
                       {required - going > 0

@@ -88,6 +88,22 @@ export function subscribeEvents(
           }
         }
 
+        // Get actual participants count
+        try {
+          const partsRef = collection(db, "events", docSnap.id, "participants");
+          const partsSnap = await getDocs(partsRef);
+          let count = 0;
+          partsSnap.forEach((p) => {
+            const pData = p.data();
+            if (pData.status === "going" || pData.status === "confirmed") {
+              count++;
+            }
+          });
+          item.goingCount = count;
+        } catch (e) {
+          console.warn("Failed to fetch participant count for event:", docSnap.id, e);
+        }
+
         items.push(item);
       }
 
