@@ -4,6 +4,7 @@ import {
   doc,
   collection,
   onSnapshot,
+  getDoc,
   setDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -156,7 +157,22 @@ function renderEvent(event) {
     eventDescription.classList.add("hidden");
   }
 
-  eventOrganizer.textContent = event.creatorName || t("organizer");
+  eventOrganizer.textContent = t("organizer");
+  if (event.creatorId) {
+    getDoc(doc(db, "users", event.creatorId))
+      .then((userSnap) => {
+        if (userSnap.exists() && userSnap.data().displayName) {
+          eventOrganizer.textContent = userSnap.data().displayName;
+        } else if (event.creatorName) {
+          eventOrganizer.textContent = event.creatorName;
+        }
+      })
+      .catch(() => {
+        if (event.creatorName) eventOrganizer.textContent = event.creatorName;
+      });
+  } else if (event.creatorName) {
+    eventOrganizer.textContent = event.creatorName;
+  }
   eventDate.textContent = formatDateTime(event.dateTime);
   eventLocation.textContent = event.location || "";
 

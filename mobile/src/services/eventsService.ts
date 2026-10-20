@@ -5,6 +5,7 @@ import {
   query,
   orderBy,
   where,
+  getDoc,
   getDocs,
   setDoc,
   updateDoc,
@@ -69,7 +70,7 @@ export function subscribeEvents(
           location: data.location || "",
           dateTime: data.dateTime,
           creatorId: data.creatorId || "",
-          creatorName: data.creatorName || "",
+          creatorName: "",
           requiredCount: Number(data.requiredCount) || 10,
           isRecurring: !!data.isRecurring,
           recurrenceRule: data.recurrenceRule,
@@ -85,6 +86,19 @@ export function subscribeEvents(
             item.myRole = "creator";
           } else if (item.delegatedTo === userId) {
             item.myRole = "delegated";
+          }
+        }
+
+        // Fetch organizer displayName from users/{creatorId}
+        if (item.creatorId) {
+          try {
+            const userSnap = await getDoc(doc(db, "users", item.creatorId));
+            if (userSnap.exists()) {
+              item.creatorName = userSnap.data().displayName || "";
+            }
+          } catch (e) {
+            // fallback
+            item.creatorName = data.creatorName || "";
           }
         }
 
@@ -164,7 +178,6 @@ export async function createEvent(
     location: input.location.trim(),
     dateTime: Timestamp.fromDate(input.dateTime),
     creatorId: user.uid,
-    creatorName: user.displayName || "Organizer",
     requiredCount: Math.max(1, Math.min(100, Math.floor(input.requiredCount))),
     isRecurring: input.isRecurring,
     status: "open",

@@ -10,7 +10,7 @@ import {
   Alert
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { doc, onSnapshot, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, onSnapshot, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../src/config/firebase";
 import { useAuthStore } from "../../src/store/authStore";
 import { useI18n } from "../../src/i18n";
@@ -27,6 +27,7 @@ export default function EventDetailScreen() {
   const { t, language } = useI18n();
 
   const [event, setEvent] = useState<any>(null);
+  const [creatorDisplayName, setCreatorDisplayName] = useState<string>("");
   const [participants, setParticipants] = useState<ParticipantItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingRsvp, setSavingRsvp] = useState(false);
@@ -36,9 +37,21 @@ export default function EventDetailScreen() {
 
     // Listen to event doc
     const eventRef = doc(db, "events", id);
-    const unsubEvent = onSnapshot(eventRef, (snap) => {
+    const unsubEvent = onSnapshot(eventRef, async (snap) => {
       if (snap.exists()) {
-        setEvent({ id: snap.id, ...snap.data() });
+        const evData = { id: snap.id, ...snap.data() } as any;
+        setEvent(evData);
+
+        if (evData.creatorId) {
+          try {
+            const userSnap = await getDoc(doc(db, "users", evData.creatorId));
+            if (userSnap.exists()) {
+              setCreatorDisplayName(userSnap.data().displayName || "");
+            }
+          } catch (e) {
+            setCreatorDisplayName(evData.creatorName || "");
+          }
+        }
       }
       setLoading(false);
     });
@@ -168,7 +181,7 @@ export default function EventDetailScreen() {
           <Text style={styles.metaIcon}>👤</Text>
           <View>
             <Text style={styles.metaLabel}>{t("organized")}</Text>
-            <Text style={styles.metaValue}>{event.creatorName}</Text>
+            <Text style={styles.metaValue}>{creatorDisplayName || event.creatorName || ""}</Text>
           </View>
         </View>
 

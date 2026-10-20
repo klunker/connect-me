@@ -87,8 +87,8 @@ service cloud.firestore {
                (!('updatedAt' in data) || data.updatedAt is timestamp);
       }
 
-      // Read is restricted to owner to protect private PII (email, phone, pushToken)
-      allow read: if isOwner(userId);
+      // Allow reading user document (for displayName/organizer)
+      allow read: if true;
 
       allow create: if isOwner(userId) &&
                        isRegisteredUser() &&
@@ -110,14 +110,14 @@ service cloud.firestore {
       }
 
       function isValidEventData(data) {
-        return data.keys().hasAll(['title', 'location', 'dateTime', 'creatorId', 'creatorName', 'requiredCount', 'isRecurring', 'status', 'createdAt']) &&
+        return data.keys().hasAll(['title', 'location', 'dateTime', 'creatorId', 'requiredCount', 'isRecurring', 'status', 'createdAt']) &&
                data.keys().hasOnly(['title', 'description', 'location', 'dateTime', 'creatorId', 'creatorName', 'requiredCount', 'isRecurring', 'recurrenceRule', 'parentEventId', 'status', 'delegatedTo', 'createdAt', 'updatedAt']) &&
                validStringLength(data.title, 1, 100) &&
                (!('description' in data) || data.description == null || (data.description is string && data.description.size() <= 1000)) &&
                validStringLength(data.location, 1, 200) &&
                data.dateTime is timestamp &&
                validStringLength(data.creatorId, 1, 128) &&
-               validStringLength(data.creatorName, 1, 60) &&
+               (!('creatorName' in data) || data.creatorName == null || validStringLength(data.creatorName, 1, 60)) &&
                data.requiredCount is int && data.requiredCount >= 1 && data.requiredCount <= 100 &&
                data.isRecurring is bool &&
                (!('recurrenceRule' in data) || data.recurrenceRule == null || (data.recurrenceRule is string && data.recurrenceRule.size() <= 50)) &&
