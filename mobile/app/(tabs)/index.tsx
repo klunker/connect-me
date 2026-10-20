@@ -244,6 +244,15 @@ export default function MyEventsScreen() {
           }}
         />
       )}
+
+      {/* Floating Action Button (Create Event) */}
+      <TouchableOpacity
+        style={styles.fab}
+        activeOpacity={0.85}
+        onPress={() => router.push("/event/create")}
+      >
+        <Text style={styles.fabIcon}>+</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -433,5 +442,27 @@ const styles = StyleSheet.create({
     height: "100%",
     backgroundColor: "#10b981",
     borderRadius: 10,
+  },
+  fab: {
+    position: "absolute",
+    right: 20,
+    bottom: 20,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: "#10b981",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#10b981",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  fabIcon: {
+    fontSize: 32,
+    fontWeight: "600",
+    color: "#0b0f19",
+    marginTop: -2,
   },
 });

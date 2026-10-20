@@ -5,24 +5,31 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  FlatList
+  TouchableOpacity,
+  Share,
+  Alert
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
-import { doc, onSnapshot } from "firebase/firestore";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { doc, onSnapshot, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../src/config/firebase";
+import { useAuthStore } from "../../src/store/authStore";
 import { useI18n } from "../../src/i18n";
 import {
   subscribeEventParticipants,
   ParticipantItem
 } from "../../src/services/eventsService";
+import { getGuestEventUrl } from "../../src/config/constants";
 
 export default function EventDetailScreen() {
+  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { user, profile } = useAuthStore();
   const { t, language } = useI18n();
 
   const [event, setEvent] = useState<any>(null);
   const [participants, setParticipants] = useState<ParticipantItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [savingRsvp, setSavingRsvp] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -47,6 +54,43 @@ export default function EventDetailScreen() {
     };
   }, [id]);
 
+  const handleShare = async () => {
+    if (!id || !event) return;
+    const url = getGuestEventUrl(id);
+    try {
+      await Share.share({
+        message: `${t("shareMessage")} ${event.title}\n📍 ${event.location}\n👉 ${url}`,
+        url: url,
+      });
+    } catch (e) {
+      console.warn("Share error:", e);
+    }
+  };
+
+  const handleRsvp = async (status: "going" | "not_going") => {
+    if (!user || !id) return;
+    setSavingRsvp(true);
+    try {
+      const partDocRef = doc(db, "events", id, "participants", user.uid);
+      await setDoc(
+        partDocRef,
+        {
+          userId: user.uid,
+          displayName: profile?.displayName || user.displayName || user.email?.split("@")[0] || "Member",
+          status: status,
+          isGuest: false,
+          respondedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+    } catch (err: any) {
+      console.error("Failed to update RSVP:", err);
+      Alert.alert(t("authError"), err.message || "Failed to update RSVP");
+    } finally {
+      setSavingRsvp(false);
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -62,6 +106,9 @@ export default function EventDetailScreen() {
       </View>
     );
   }
+
+  const isCreator = user?.uid === event.creatorId || user?.uid === event.delegatedTo;
+  const myParticipant = participants.find((p) => p.userId === user?.uid);
 
   const date = event.dateTime?.toDate
     ? event.dateTime.toDate()
@@ -85,7 +132,18 @@ export default function EventDetailScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Event Header Card */}
       <View style={styles.card}>
-        <Text style={styles.title}>{event.title}</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>{event.title}</Text>
+          {isCreator && (
+            <TouchableOpacity
+              style={styles.editBtn}
+              onPress={() => router.push(`/event/create?editId=${id}`)}
+            >
+              <Text style={styles.editBtnText}>✏️ {t("editEvent")}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
         {event.description ? (
           <Text style={styles.description}>{event.description}</Text>
         ) : null}
@@ -135,6 +193,64 @@ export default function EventDetailScreen() {
             />
           </View>
         </View>
+
+        {/* Share Guest Link Button */}
+        <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
+          <Text style={styles.shareBtnText}>🔗 {t("shareLink")}</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* RSVP Action for current user */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Twoja obecność</Text>
+        {myParticipant ? (
+          <View style={styles.myRsvpBox}>
+            <Text style={styles.myRsvpText}>
+              {myParticipant.status === "going" || myParticipant.status === "confirmed"
+                ? "✓ Twój status: Będę obecny"
+                : "✗ Twój status: Nie dam rady"}
+            </Text>
+            <View style={styles.rsvpBtnRow}>
+              <TouchableOpacity
+                style={[
+                  styles.rsvpSmallBtn,
+                  myParticipant.status === "going" && styles.rsvpSmallBtnActive,
+                ]}
+                disabled={savingRsvp}
+                onPress={() => handleRsvp("going")}
+              >
+                <Text style={styles.rsvpSmallBtnText}>👍 Będę</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.rsvpSmallBtn,
+                  myParticipant.status === "not_going" && styles.rsvpSmallBtnDanger,
+                ]}
+                disabled={savingRsvp}
+                onPress={() => handleRsvp("not_going")}
+              >
+                <Text style={styles.rsvpSmallBtnText}>👎 Nie dam rady</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.rsvpBtnRow}>
+            <TouchableOpacity
+              style={[styles.rsvpActionBtn, styles.rsvpActionGoing]}
+              disabled={savingRsvp}
+              onPress={() => handleRsvp("going")}
+            >
+              <Text style={styles.rsvpActionText}>👍 Będę</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.rsvpActionBtn, styles.rsvpActionNotGoing]}
+              disabled={savingRsvp}
+              onPress={() => handleRsvp("not_going")}
+            >
+              <Text style={styles.rsvpActionText}>👎 Nie dam rady</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       {/* Participants Card */}
@@ -159,7 +275,7 @@ export default function EventDetailScreen() {
                   <View>
                     <Text style={styles.partName}>{p.displayName}</Text>
                     <Text style={styles.partType}>
-                      {p.isGuest ? "Гость / Gość" : "Пользователь / User"}
+                      {p.isGuest ? "Gość / Guest" : "Klubowicz / Member"}
                     </Text>
                   </View>
                 </View>
@@ -175,7 +291,7 @@ export default function EventDetailScreen() {
                       isGoing ? styles.statusPillTextGoing : styles.statusPillTextNotGoing,
                     ]}
                   >
-                    {isGoing ? "✓ Идет" : "✗ Не идет"}
+                    {isGoing ? "✓ Będzie" : "✗ Nie będzie"}
                   </Text>
                 </View>
               </View>
@@ -195,6 +311,7 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     gap: 16,
+    paddingBottom: 36,
   },
   center: {
     flex: 1,
@@ -210,11 +327,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.08)",
   },
+  titleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 8,
+    gap: 12,
+  },
   title: {
+    flex: 1,
     fontSize: 22,
     fontWeight: "800",
     color: "#ffffff",
-    marginBottom: 8,
+  },
+  editBtn: {
+    backgroundColor: "#1c273c",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+  },
+  editBtnText: {
+    color: "#cbd5e1",
+    fontSize: 12,
+    fontWeight: "700",
   },
   description: {
     fontSize: 14,
@@ -249,6 +386,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 14,
     marginTop: 12,
+    marginBottom: 14,
   },
   quorumHeader: {
     flexDirection: "row",
@@ -277,11 +415,80 @@ const styles = StyleSheet.create({
     backgroundColor: "#10b981",
     borderRadius: 10,
   },
+  shareBtn: {
+    backgroundColor: "rgba(59, 130, 246, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(59, 130, 246, 0.3)",
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: "center",
+  },
+  shareBtnText: {
+    color: "#38bdf8",
+    fontSize: 14,
+    fontWeight: "700",
+  },
   cardTitle: {
     fontSize: 16,
     fontWeight: "700",
     color: "#ffffff",
-    marginBottom: 14,
+    marginBottom: 12,
+  },
+  myRsvpBox: {
+    backgroundColor: "#0e1524",
+    borderRadius: 12,
+    padding: 14,
+    gap: 10,
+  },
+  myRsvpText: {
+    color: "#10b981",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  rsvpBtnRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  rsvpSmallBtn: {
+    flex: 1,
+    backgroundColor: "#1c273c",
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  rsvpSmallBtnActive: {
+    backgroundColor: "rgba(16, 185, 129, 0.2)",
+    borderWidth: 1,
+    borderColor: "#10b981",
+  },
+  rsvpSmallBtnDanger: {
+    backgroundColor: "rgba(239, 68, 68, 0.2)",
+    borderWidth: 1,
+    borderColor: "#ef4444",
+  },
+  rsvpSmallBtnText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  rsvpActionBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  rsvpActionGoing: {
+    backgroundColor: "#10b981",
+  },
+  rsvpActionNotGoing: {
+    backgroundColor: "rgba(239, 68, 68, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(239, 68, 68, 0.3)",
+  },
+  rsvpActionText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "700",
   },
   partItem: {
     flexDirection: "row",

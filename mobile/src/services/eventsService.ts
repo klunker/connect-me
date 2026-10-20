@@ -5,7 +5,12 @@ import {
   query,
   orderBy,
   where,
-  getDocs
+  getDocs,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  serverTimestamp,
+  Timestamp
 } from "firebase/firestore";
 import { db } from "../config/firebase";
 
@@ -114,4 +119,93 @@ export function subscribeEventParticipants(
     });
     onUpdate(list);
   });
+}
+
+export interface CreateEventInput {
+  title: string;
+  description?: string;
+  location: string;
+  dateTime: Date;
+  requiredCount: number;
+  isRecurring: boolean;
+  recurrenceRule?: string;
+}
+
+/**
+ * Creates a new event in Firestore conforming to security rules.
+ * Also registers the creator as the first participant with status 'going'.
+ */
+export async function createEvent(
+  input: CreateEventInput,
+  user: { uid: string; displayName: string }
+): Promise<string> {
+  const eventsCollection = collection(db, "events");
+
+  const newDocRef = doc(eventsCollection);
+
+  const payload: any = {
+    title: input.title.trim(),
+    location: input.location.trim(),
+    dateTime: Timestamp.fromDate(input.dateTime),
+    creatorId: user.uid,
+    creatorName: user.displayName || "Organizer",
+    requiredCount: Math.max(1, Math.min(100, Math.floor(input.requiredCount))),
+    isRecurring: input.isRecurring,
+    status: "open",
+    createdAt: serverTimestamp(),
+  };
+
+  if (input.description && input.description.trim()) {
+    payload.description = input.description.trim();
+  }
+
+  if (input.isRecurring && input.recurrenceRule) {
+    payload.recurrenceRule = input.recurrenceRule;
+  }
+
+  await setDoc(newDocRef, payload);
+
+  // Add creator as first participant
+  const creatorPartRef = doc(db, "events", newDocRef.id, "participants", user.uid);
+  await setDoc(creatorPartRef, {
+    userId: user.uid,
+    displayName: user.displayName || "Organizer",
+    status: "going",
+    isGuest: false,
+    respondedAt: serverTimestamp(),
+  });
+
+  return newDocRef.id;
+}
+
+/**
+ * Updates an existing event.
+ */
+export async function updateEvent(
+  eventId: string,
+  input: Partial<CreateEventInput> & { status?: "open" | "confirmed" | "cancelled" | "past" }
+) {
+  const eventDocRef = doc(db, "events", eventId);
+  const payload: any = {
+    updatedAt: serverTimestamp(),
+  };
+
+  if (input.title) payload.title = input.title.trim();
+  if (input.location) payload.location = input.location.trim();
+  if (input.description !== undefined) payload.description = input.description.trim() || null;
+  if (input.dateTime) payload.dateTime = Timestamp.fromDate(input.dateTime);
+  if (input.requiredCount) payload.requiredCount = Math.max(1, Math.min(100, Math.floor(input.requiredCount)));
+  if (input.isRecurring !== undefined) payload.isRecurring = input.isRecurring;
+  if (input.recurrenceRule !== undefined) payload.recurrenceRule = input.recurrenceRule || null;
+  if (input.status) payload.status = input.status;
+
+  await updateDoc(eventDocRef, payload);
+}
+
+/**
+ * Deletes an event.
+ */
+export async function deleteEvent(eventId: string) {
+  const eventDocRef = doc(db, "events", eventId);
+  await deleteDoc(eventDocRef);
 }

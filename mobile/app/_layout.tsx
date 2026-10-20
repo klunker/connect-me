@@ -58,6 +58,13 @@ function NavigationGuard() {
           headerBackTitle: "Back",
         }}
       />
+      <Stack.Screen
+        name="event/create"
+        options={{
+          title: "ConnectMe",
+          headerBackTitle: "Back",
+        }}
+      />
     </Stack>
   );
 }
