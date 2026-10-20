@@ -65,16 +65,16 @@ function detectLanguage() {
   const saved = localStorage.getItem("connectme_lang");
   if (saved && translations[saved]) return saved;
 
-  const browserLang = (navigator.language || "en").toLowerCase();
-  if (browserLang.startsWith("pl")) return "pl";
+  const browserLang = (navigator.language || "pl").toLowerCase();
+  if (browserLang.startsWith("en")) return "en";
   if (browserLang.startsWith("uk") || browserLang.startsWith("ua")) return "uk";
   if (browserLang.startsWith("ru")) return "ru";
-  return "en";
+  return "pl";
 }
 
 function t(key) {
-  const dict = translations[currentLang] || translations.en;
-  return dict[key] || translations.en[key] || key;
+  const dict = translations[currentLang] || translations.pl || translations.en;
+  return dict[key] || translations.pl[key] || translations.en[key] || key;
 }
 
 function updateUiText() {
