@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   RefreshControl
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { useAuthStore } from "../../src/store/authStore";
 import { useI18n } from "../../src/i18n";
 import { subscribeEvents, EventItem } from "../../src/services/eventsService";
@@ -23,24 +23,26 @@ export default function MyEventsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<"all" | "organized" | "joined">("all");
 
-  useEffect(() => {
-    setLoading(true);
-    const unsubscribe = subscribeEvents(
-      user?.uid,
-      (items) => {
-        setEvents(items);
-        setLoading(false);
-        setRefreshing(false);
-      },
-      (err) => {
-        console.error("Firestore events error:", err);
-        setLoading(false);
-        setRefreshing(false);
-      }
-    );
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      const unsubscribe = subscribeEvents(
+        user?.uid,
+        (items) => {
+          setEvents(items);
+          setLoading(false);
+          setRefreshing(false);
+        },
+        (err) => {
+          console.error("Firestore events error:", err);
+          setLoading(false);
+          setRefreshing(false);
+        }
+      );
 
-    return () => unsubscribe();
-  }, [user?.uid]);
+      return () => unsubscribe();
+    }, [user?.uid])
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -51,8 +53,7 @@ export default function MyEventsScreen() {
       return item.creatorId === user?.uid || item.delegatedTo === user?.uid;
     }
     if (filter === "joined") {
-      // In Step 3, if not creator, considered joined/attending or listed
-      return item.creatorId !== user?.uid;
+      return item.isAttending === true;
     }
     return true;
   });

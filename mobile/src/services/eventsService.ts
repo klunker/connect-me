@@ -32,6 +32,7 @@ export interface EventItem {
   createdAt: any;
   // Computed fields
   goingCount?: number;
+  isAttending?: boolean;
   myRole?: "creator" | "participant" | "delegated";
   myStatus?: "going" | "not_going" | "confirmed" | "attended" | "no_show";
 }
@@ -46,8 +47,8 @@ export interface ParticipantItem {
 }
 
 /**
- * Subscribes to events collection.
- * Since events have public read in firestore.rules, all active events can be fetched in real-time.
+ * Subscribes to events collection and their participants in real-time.
+ * Dynamically updates goingCount and isAttending when RSVP changes.
  */
 export function subscribeEvents(
   userId: string | undefined,
@@ -55,22 +56,50 @@ export function subscribeEvents(
   onError: (err: any) => void
 ) {
   const eventsRef = collection(db, "events");
+  const participantsUnsubs: Record<string, () => void> = {};
+  let currentEventsMap: Record<string, EventItem> = {};
 
-  return onSnapshot(
+  const notify = () => {
+    const list = Object.values(currentEventsMap);
+    list.sort((a, b) => {
+      const timeA = a.dateTime?.toMillis ? a.dateTime.toMillis() : new Date(a.dateTime).getTime() || 0;
+      const timeB = b.dateTime?.toMillis ? b.dateTime.toMillis() : new Date(b.dateTime).getTime() || 0;
+      return timeA - timeB;
+    });
+    onUpdate([...list]);
+  };
+
+  const unsubscribeEvents = onSnapshot(
     eventsRef,
     async (snapshot) => {
-      const items: EventItem[] = [];
+      const activeIds = new Set<string>();
 
       for (const docSnap of snapshot.docs) {
+        const id = docSnap.id;
+        activeIds.add(id);
         const data = docSnap.data();
-        const item: EventItem = {
-          id: docSnap.id,
+
+        let creatorDisplayName = currentEventsMap[id]?.creatorName || "";
+        if (!creatorDisplayName && data.creatorId) {
+          try {
+            const uSnap = await getDoc(doc(db, "users", data.creatorId));
+            if (uSnap.exists()) {
+              creatorDisplayName = uSnap.data().displayName || "";
+            }
+          } catch (e) {
+            creatorDisplayName = data.creatorName || "";
+          }
+        }
+
+        const existing = currentEventsMap[id];
+        currentEventsMap[id] = {
+          id: id,
           title: data.title || "",
           description: data.description,
           location: data.location || "",
           dateTime: data.dateTime,
           creatorId: data.creatorId || "",
-          creatorName: "",
+          creatorName: creatorDisplayName,
           requiredCount: Number(data.requiredCount) || 10,
           isRecurring: !!data.isRecurring,
           recurrenceRule: data.recurrenceRule,
@@ -78,60 +107,70 @@ export function subscribeEvents(
           status: data.status || "open",
           delegatedTo: data.delegatedTo,
           createdAt: data.createdAt,
-          goingCount: 0,
+          goingCount: existing?.goingCount || 0,
+          isAttending: existing?.isAttending || false,
+          myRole: userId === data.creatorId ? "creator" : userId === data.delegatedTo ? "delegated" : undefined,
+          myStatus: existing?.myStatus,
         };
 
-        if (userId) {
-          if (item.creatorId === userId) {
-            item.myRole = "creator";
-          } else if (item.delegatedTo === userId) {
-            item.myRole = "delegated";
-          }
-        }
+        // If not already subscribed to this event's participants, subscribe now
+        if (!participantsUnsubs[id]) {
+          const partsRef = collection(db, "events", id, "participants");
+          participantsUnsubs[id] = onSnapshot(
+            partsRef,
+            (partsSnap) => {
+              let count = 0;
+              let isUserAttending = false;
+              let userStatus: any = undefined;
 
-        // Fetch organizer displayName from users/{creatorId}
-        if (item.creatorId) {
-          try {
-            const userSnap = await getDoc(doc(db, "users", item.creatorId));
-            if (userSnap.exists()) {
-              item.creatorName = userSnap.data().displayName || "";
-            }
-          } catch (e) {
-            // fallback
-            item.creatorName = data.creatorName || "";
-          }
-        }
+              partsSnap.forEach((pDoc) => {
+                const pData = pDoc.data();
+                if (pData.status === "going" || pData.status === "confirmed") {
+                  count++;
+                }
+                if (userId && (pDoc.id === userId || pData.userId === userId)) {
+                  userStatus = pData.status;
+                  if (pData.status === "going" || pData.status === "confirmed") {
+                    isUserAttending = true;
+                  }
+                }
+              });
 
-        // Get actual participants count
-        try {
-          const partsRef = collection(db, "events", docSnap.id, "participants");
-          const partsSnap = await getDocs(partsRef);
-          let count = 0;
-          partsSnap.forEach((p) => {
-            const pData = p.data();
-            if (pData.status === "going" || pData.status === "confirmed") {
-              count++;
-            }
-          });
-          item.goingCount = count;
-        } catch (e) {
-          console.warn("Failed to fetch participant count for event:", docSnap.id, e);
+              if (currentEventsMap[id]) {
+                currentEventsMap[id] = {
+                  ...currentEventsMap[id],
+                  goingCount: count,
+                  isAttending: isUserAttending,
+                  myStatus: userStatus,
+                };
+                notify();
+              }
+            },
+            (err) => console.warn("Participants sub error:", id, err)
+          );
         }
-
-        items.push(item);
       }
 
-      // Sort by date (upcoming first)
-      items.sort((a, b) => {
-        const timeA = a.dateTime?.toMillis ? a.dateTime.toMillis() : new Date(a.dateTime).getTime() || 0;
-        const timeB = b.dateTime?.toMillis ? b.dateTime.toMillis() : new Date(b.dateTime).getTime() || 0;
-        return timeA - timeB;
-      });
+      // Cleanup deleted events
+      for (const id of Object.keys(currentEventsMap)) {
+        if (!activeIds.has(id)) {
+          delete currentEventsMap[id];
+          if (participantsUnsubs[id]) {
+            participantsUnsubs[id]();
+            delete participantsUnsubs[id];
+          }
+        }
+      }
 
-      onUpdate(items);
+      notify();
     },
     onError
   );
+
+  return () => {
+    unsubscribeEvents();
+    Object.values(participantsUnsubs).forEach((unsub) => unsub());
+  };
 }
 
 /**
