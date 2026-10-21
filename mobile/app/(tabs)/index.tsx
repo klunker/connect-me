@@ -9,9 +9,12 @@ import {
   RefreshControl
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
+import { Feather } from "@expo/vector-icons";
 import { useAuthStore } from "../../src/store/authStore";
 import { useI18n } from "../../src/i18n";
 import { subscribeEvents, EventItem } from "../../src/services/eventsService";
+import { colors, gradients, radius, shadow, spacing } from "../../src/theme";
 
 export default function MyEventsScreen() {
   const router = useRouter();
@@ -103,6 +106,13 @@ export default function MyEventsScreen() {
 
   return (
     <View style={styles.container}>
+      <LinearGradient
+        colors={gradients.screen}
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.4, y: 1 }}
+      />
+
       {/* Filter Tabs */}
       <View style={styles.filtersContainer}>
         <TouchableOpacity
@@ -157,7 +167,7 @@ export default function MyEventsScreen() {
       {/* Main Content */}
       {loading ? (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#10b981" />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : filteredEvents.length === 0 ? (
         <View style={styles.centerContainer}>
@@ -173,7 +183,7 @@ export default function MyEventsScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor="#10b981"
+              tintColor={colors.primary}
             />
           }
           renderItem={({ item }) => {
@@ -186,60 +196,67 @@ export default function MyEventsScreen() {
             return (
               <TouchableOpacity
                 style={styles.card}
-                activeOpacity={0.8}
+                activeOpacity={0.85}
                 onPress={() => router.push(`/event/${item.id}`)}
               >
-                <View style={styles.cardHeader}>
-                  <View style={styles.badgeGroup}>
-                    {renderStatusBadge(item.status)}
-                    <View
-                      style={[
-                        styles.roleBadge,
-                        isCreator ? styles.roleBadgeCreator : styles.roleBadgeParticipant,
-                      ]}
-                    >
-                      <Text style={styles.roleText}>
-                        {isCreator ? t("creatorBadge") : t("participantBadge")}
+                <LinearGradient
+                  colors={gradients.card}
+                  style={styles.cardGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0.6, y: 1 }}
+                >
+                  <View style={styles.cardHeader}>
+                    <View style={styles.badgeGroup}>
+                      {renderStatusBadge(item.status)}
+                      <View
+                        style={[
+                          styles.roleBadge,
+                          isCreator ? styles.roleBadgeCreator : styles.roleBadgeParticipant,
+                        ]}
+                      >
+                        <Text style={styles.roleText}>
+                          {isCreator ? t("creatorBadge") : t("participantBadge")}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.dateText}>
+                      {formatEventDate(item.dateTime)}
+                    </Text>
+                  </View>
+
+                  <Text style={styles.eventTitle}>{item.title}</Text>
+
+                  {item.location ? (
+                    <View style={styles.locationRow}>
+                      <Feather name="map-pin" size={14} color={colors.textSubtle} />
+                      <Text style={styles.locationText} numberOfLines={1}>
+                        {item.location}
                       </Text>
                     </View>
-                  </View>
-                  <Text style={styles.dateText}>
-                    {formatEventDate(item.dateTime)}
-                  </Text>
-                </View>
+                  ) : null}
 
-                <Text style={styles.eventTitle}>{item.title}</Text>
-
-                {item.location ? (
-                  <View style={styles.locationRow}>
-                    <Text style={styles.locationIcon}>📍</Text>
-                    <Text style={styles.locationText} numberOfLines={1}>
-                      {item.location}
-                    </Text>
+                  {/* Quorum Progress Bar */}
+                  <View style={styles.quorumContainer}>
+                    <View style={styles.quorumRow}>
+                      <Text style={styles.quorumLabel}>
+                        {t("needed")}: <Text style={styles.quorumNum}>{going} / {required} {t("people")}</Text>
+                      </Text>
+                      <Text style={styles.spotsLeftText}>
+                        {required - going > 0
+                          ? `${t("spotsLeft")}: ${required - going}`
+                          : `🎉 ${t("quorumReached")}`}
+                      </Text>
+                    </View>
+                    <View style={styles.progressBar}>
+                      <View
+                        style={[
+                          styles.progressFill,
+                          { width: `${Math.max(8, percent)}%` },
+                        ]}
+                      />
+                    </View>
                   </View>
-                ) : null}
-
-                {/* Quorum Progress Bar */}
-                <View style={styles.quorumContainer}>
-                  <View style={styles.quorumRow}>
-                    <Text style={styles.quorumLabel}>
-                      {t("needed")}: <Text style={styles.quorumNum}>{going} / {required} {t("people")}</Text>
-                    </Text>
-                    <Text style={styles.spotsLeftText}>
-                      {required - going > 0
-                        ? `${t("spotsLeft")}: ${required - going}`
-                        : `🎉 ${t("quorumReached")}`}
-                    </Text>
-                  </View>
-                  <View style={styles.progressBar}>
-                    <View
-                      style={[
-                        styles.progressFill,
-                        { width: `${Math.max(8, percent)}%` },
-                      ]}
-                    />
-                  </View>
-                </View>
+                </LinearGradient>
               </TouchableOpacity>
             );
           }}
@@ -252,7 +269,14 @@ export default function MyEventsScreen() {
         activeOpacity={0.85}
         onPress={() => router.push("/event/create")}
       >
-        <Text style={styles.fabIcon}>+</Text>
+        <LinearGradient
+          colors={gradients.navy}
+          style={styles.fabGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Text style={styles.fabIcon}>+</Text>
+        </LinearGradient>
       </TouchableOpacity>
     </View>
   );
@@ -261,40 +285,41 @@ export default function MyEventsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0b0f19",
+    backgroundColor: colors.bgTop,
   },
   filtersContainer: {
     flexDirection: "row",
-    backgroundColor: "#151d2d",
-    marginHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 8,
-    borderRadius: 14,
-    padding: 3,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
+    backgroundColor: colors.card,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+    borderRadius: radius.lg,
+    padding: 4,
+    ...shadow.card,
   },
   filterBtn: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 10,
     alignItems: "center",
-    borderRadius: 11,
+    borderRadius: radius.md,
   },
   filterBtnActive: {
-    backgroundColor: "#25334c",
+    backgroundColor: colors.navy,
+    ...shadow.button,
   },
   filterText: {
-    color: "#64748b",
+    color: colors.textMuted,
     fontSize: 13,
     fontWeight: "700",
+    letterSpacing: 0.2,
   },
   filterTextActive: {
-    color: "#ffffff",
+    color: colors.textInverse,
   },
   listContent: {
-    padding: 16,
-    paddingTop: 8,
-    gap: 14,
+    padding: spacing.md,
+    paddingTop: spacing.sm,
+    gap: spacing.md,
   },
   centerContainer: {
     flex: 1,
@@ -303,35 +328,32 @@ const styles = StyleSheet.create({
     padding: 32,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#ffffff",
+    fontSize: 19,
+    fontWeight: "800",
+    color: colors.text,
+    letterSpacing: -0.3,
     marginBottom: 8,
   },
   emptyDesc: {
     fontSize: 14,
-    color: "#64748b",
+    color: colors.textMuted,
     textAlign: "center",
-    lineHeight: 20,
+    lineHeight: 21,
   },
   card: {
-    backgroundColor: "#151d2d",
-    borderRadius: 18,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-    marginBottom: 12,
+    borderRadius: radius.xl,
+    ...shadow.card,
+    overflow: "hidden",
+  },
+  cardGradient: {
+    padding: 20,
+    borderRadius: radius.xl,
   },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 12,
   },
   badgeGroup: {
     flexDirection: "row",
@@ -339,131 +361,134 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+    backgroundColor: colors.cardSoft,
   },
   statusBadgeOpen: {
-    backgroundColor: "rgba(16, 185, 129, 0.15)",
+    backgroundColor: colors.successSoft,
   },
   statusBadgeConfirmed: {
-    backgroundColor: "rgba(59, 130, 246, 0.15)",
+    backgroundColor: colors.primarySoft,
   },
   statusBadgeCancelled: {
-    backgroundColor: "rgba(239, 68, 68, 0.15)",
+    backgroundColor: colors.dangerSoft,
   },
   statusText: {
-    fontSize: 11,
-    fontWeight: "700",
+    fontSize: 10,
+    fontWeight: "800",
     textTransform: "uppercase",
-    color: "#94a3b8",
+    letterSpacing: 0.7,
+    color: colors.textSubtle,
   },
   statusTextOpen: {
-    color: "#10b981",
+    color: colors.success,
   },
   statusTextConfirmed: {
-    color: "#3b82f6",
+    color: colors.accentDeep,
   },
   statusTextCancelled: {
-    color: "#ef4444",
+    color: colors.danger,
   },
   roleBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
   },
   roleBadgeCreator: {
-    backgroundColor: "rgba(245, 158, 11, 0.15)",
+    backgroundColor: colors.warnSoft,
   },
   roleBadgeParticipant: {
-    backgroundColor: "rgba(99, 102, 241, 0.15)",
+    backgroundColor: colors.primarySoft,
   },
   roleText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#cbd5e1",
+    fontSize: 10,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    color: colors.textMuted,
   },
   dateText: {
     fontSize: 12,
-    color: "#94a3b8",
-    fontWeight: "600",
+    color: colors.textSubtle,
+    fontWeight: "700",
   },
   eventTitle: {
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: "800",
-    color: "#ffffff",
-    marginBottom: 8,
+    color: colors.text,
+    letterSpacing: -0.4,
+    marginBottom: 10,
   },
   locationRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 14,
+    marginBottom: 16,
     gap: 6,
-  },
-  locationIcon: {
-    fontSize: 13,
   },
   locationText: {
     fontSize: 13,
-    color: "#94a3b8",
+    color: colors.textMuted,
     flex: 1,
   },
   quorumContainer: {
-    backgroundColor: "#1c273c",
-    borderRadius: 12,
-    padding: 12,
+    backgroundColor: colors.cardSoft,
+    borderRadius: radius.md,
+    padding: 14,
   },
   quorumRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "baseline",
-    marginBottom: 8,
+    marginBottom: 10,
   },
   quorumLabel: {
     fontSize: 12,
-    color: "#94a3b8",
+    color: colors.textMuted,
   },
   quorumNum: {
-    fontWeight: "700",
-    color: "#ffffff",
+    fontWeight: "800",
+    color: colors.text,
   },
   spotsLeftText: {
     fontSize: 12,
-    fontWeight: "700",
-    color: "#10b981",
+    fontWeight: "800",
+    color: colors.primary,
   },
   progressBar: {
     height: 7,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    borderRadius: 10,
+    backgroundColor: colors.borderStrong,
+    borderRadius: radius.pill,
     overflow: "hidden",
   },
   progressFill: {
     height: "100%",
-    backgroundColor: "#10b981",
-    borderRadius: 10,
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
   },
   fab: {
     position: "absolute",
-    right: 20,
-    bottom: 20,
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: "#10b981",
+    right: 22,
+    bottom: 24,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#10b981",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 8,
+    ...shadow.glow,
+  },
+  fabGradient: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
   },
   fabIcon: {
     fontSize: 32,
-    fontWeight: "600",
-    color: "#0b0f19",
-    marginTop: -2,
+    fontWeight: "300",
+    color: colors.textInverse,
+    marginTop: -3,
   },
 });

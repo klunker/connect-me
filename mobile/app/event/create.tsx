@@ -12,11 +12,13 @@ import {
   Share,
   Platform
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../src/config/firebase";
 import { useAuthStore } from "../../src/store/authStore";
 import { useI18n } from "../../src/i18n";
+import { colors, gradients, radius, shadow, spacing } from "../../src/theme";
 import {
   createEvent,
   updateEvent,
@@ -186,146 +188,167 @@ export default function CreateOrEditEventScreen() {
   if (initialLoading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#10b981" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={gradients.screen}
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.4, y: 1 }}
+      />
+      <ScrollView contentContainerStyle={styles.content}>
       <Text style={styles.screenHeader}>
         {isEditMode ? t("editEvent") : t("createEvent")}
       </Text>
 
       {/* Main Details Card */}
       <View style={styles.card}>
-        {/* Title */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>{t("eventTitle")} *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder={t("titlePlaceholder")}
-            placeholderTextColor="#64748b"
-            value={title}
-            onChangeText={setTitle}
-            maxLength={100}
-          />
-        </View>
-
-        {/* Location */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>{t("locationLabel")} *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder={t("locationPlaceholder")}
-            placeholderTextColor="#64748b"
-            value={location}
-            onChangeText={setLocation}
-            maxLength={200}
-          />
-        </View>
-
-        {/* Date and Time row */}
-        <View style={styles.row}>
-          <View style={[styles.inputGroup, { flex: 1 }]}>
-            <Text style={styles.label}>{t("dateLabel")} *</Text>
+        <LinearGradient
+          colors={gradients.card}
+          style={styles.cardGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0.6, y: 1 }}
+        >
+          {/* Title */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>{t("eventTitle")} *</Text>
             <TextInput
               style={styles.input}
-              placeholder="2026-10-25"
+              placeholder={t("titlePlaceholder")}
               placeholderTextColor="#64748b"
-              value={dateStr}
-              onChangeText={setDateStr}
+              value={title}
+              onChangeText={setTitle}
+              maxLength={100}
             />
           </View>
-          <View style={[styles.inputGroup, { width: 110 }]}>
-            <Text style={styles.label}>{t("timeLabel")} *</Text>
+
+          {/* Location */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>{t("locationLabel")} *</Text>
             <TextInput
               style={styles.input}
-              placeholder="18:00"
+              placeholder={t("locationPlaceholder")}
               placeholderTextColor="#64748b"
-              value={timeStr}
-              onChangeText={setTimeStr}
+              value={location}
+              onChangeText={setLocation}
+              maxLength={200}
             />
           </View>
-        </View>
 
-        {/* Required Count Stepper */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>{t("requiredCountLabel")}</Text>
-          <View style={styles.stepperRow}>
-            <TouchableOpacity
-              style={styles.stepBtn}
-              onPress={() => setRequiredCount((prev) => Math.max(2, prev - 1))}
-            >
-              <Text style={styles.stepBtnText}>−</Text>
-            </TouchableOpacity>
-            <View style={styles.countDisplay}>
-              <Text style={styles.countText}>{requiredCount}</Text>
-              <Text style={styles.countUnit}>{t("people")}</Text>
+          {/* Date and Time row */}
+          <View style={styles.row}>
+            <View style={[styles.inputGroup, { flex: 1 }]}>
+              <Text style={styles.label}>{t("dateLabel")} *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="2026-10-25"
+                placeholderTextColor="#64748b"
+                value={dateStr}
+                onChangeText={setDateStr}
+              />
             </View>
-            <TouchableOpacity
-              style={styles.stepBtn}
-              onPress={() => setRequiredCount((prev) => Math.min(50, prev + 1))}
-            >
-              <Text style={styles.stepBtnText}>+</Text>
-            </TouchableOpacity>
+            <View style={[styles.inputGroup, { width: 110 }]}>
+              <Text style={styles.label}>{t("timeLabel")} *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="18:00"
+                placeholderTextColor="#64748b"
+                value={timeStr}
+                onChangeText={setTimeStr}
+              />
+            </View>
           </View>
-        </View>
 
-        {/* Description */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>{t("descriptionLabel")}</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder={t("descPlaceholder")}
-            placeholderTextColor="#64748b"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-            numberOfLines={3}
-            maxLength={1000}
-          />
-        </View>
+          {/* Required Count Stepper */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>{t("requiredCountLabel")}</Text>
+            <View style={styles.stepperRow}>
+              <TouchableOpacity
+                style={styles.stepBtn}
+                onPress={() => setRequiredCount((prev) => Math.max(2, prev - 1))}
+              >
+                <Text style={styles.stepBtnText}>−</Text>
+              </TouchableOpacity>
+              <View style={styles.countDisplay}>
+                <Text style={styles.countText}>{requiredCount}</Text>
+                <Text style={styles.countUnit}>{t("people")}</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.stepBtn}
+                onPress={() => setRequiredCount((prev) => Math.min(50, prev + 1))}
+              >
+                <Text style={styles.stepBtnText}>+</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Description */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>{t("descriptionLabel")}</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder={t("descPlaceholder")}
+              placeholderTextColor="#64748b"
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={3}
+              maxLength={1000}
+            />
+          </View>
+        </LinearGradient>
       </View>
 
       {/* Recurrence Settings Card */}
       <View style={styles.card}>
-        <View style={styles.switchRow}>
-          <View>
-            <Text style={styles.switchTitle}>{t("recurringSwitch")}</Text>
-            <Text style={styles.switchSub}>{t("recurrenceRuleLabel")}</Text>
+        <LinearGradient
+          colors={gradients.card}
+          style={styles.cardGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0.6, y: 1 }}
+        >
+          <View style={styles.switchRow}>
+            <View>
+              <Text style={styles.switchTitle}>{t("recurringSwitch")}</Text>
+              <Text style={styles.switchSub}>{t("recurrenceRuleLabel")}</Text>
+            </View>
+            <Switch
+              value={isRecurring}
+              onValueChange={setIsRecurring}
+              trackColor={{ false: colors.borderStrong, true: colors.primary }}
+              thumbColor="#ffffff"
+            />
           </View>
-          <Switch
-            value={isRecurring}
-            onValueChange={setIsRecurring}
-            trackColor={{ false: "#1c273c", true: "#10b981" }}
-            thumbColor="#ffffff"
-          />
-        </View>
 
-        {isRecurring && (
-          <View style={styles.daysContainer}>
-            {daysList.map((day) => (
-              <TouchableOpacity
-                key={day.id}
-                style={[
-                  styles.dayChip,
-                  recurrenceDay === day.id && styles.dayChipActive,
-                ]}
-                onPress={() => setRecurrenceDay(day.id)}
-              >
-                <Text
+          {isRecurring && (
+            <View style={styles.daysContainer}>
+              {daysList.map((day) => (
+                <TouchableOpacity
+                  key={day.id}
                   style={[
-                    styles.dayChipText,
-                    recurrenceDay === day.id && styles.dayChipTextActive,
+                    styles.dayChip,
+                    recurrenceDay === day.id && styles.dayChipActive,
                   ]}
+                  onPress={() => setRecurrenceDay(day.id)}
                 >
-                  {day.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
+                  <Text
+                    style={[
+                      styles.dayChipText,
+                      recurrenceDay === day.id && styles.dayChipTextActive,
+                    ]}
+                  >
+                    {day.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </LinearGradient>
       </View>
 
       {/* Submit Button */}
@@ -335,92 +358,109 @@ export default function CreateOrEditEventScreen() {
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color="#0b0f19" />
+          <ActivityIndicator color={colors.textInverse} />
         ) : (
-          <Text style={styles.submitBtnText}>
-            {isEditMode ? t("saveChanges") : t("createEvent")}
-          </Text>
+          <LinearGradient
+            colors={gradients.navy}
+            style={styles.submitBtnGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Text style={styles.submitBtnText}>
+              {isEditMode ? t("saveChanges") : t("createEvent")}
+            </Text>
+          </LinearGradient>
         )}
       </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0b0f19",
+    backgroundColor: colors.bgTop,
   },
   content: {
-    padding: 16,
-    gap: 16,
-    paddingBottom: 40,
+    padding: spacing.md,
+    gap: spacing.md,
+    paddingBottom: spacing.xl * 1.5,
   },
   center: {
     flex: 1,
-    backgroundColor: "#0b0f19",
+    backgroundColor: colors.bgTop,
     alignItems: "center",
     justifyContent: "center",
   },
   screenHeader: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "800",
-    color: "#ffffff",
+    color: colors.text,
+    letterSpacing: -0.6,
     marginTop: 4,
   },
   card: {
-    backgroundColor: "#151d2d",
-    borderRadius: 20,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
+    borderRadius: radius.xl,
+    ...shadow.card,
+    overflow: "hidden",
+  },
+  cardGradient: {
+    padding: 20,
+    borderRadius: radius.xl,
   },
   inputGroup: {
-    marginBottom: 14,
+    marginBottom: 16,
   },
   row: {
     flexDirection: "row",
     gap: 12,
   },
   label: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#94a3b8",
-    marginBottom: 6,
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.7,
+    color: colors.textSubtle,
+    marginBottom: 8,
   },
   input: {
-    backgroundColor: "#0e1524",
+    backgroundColor: colors.cardSoft,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    borderRadius: 12,
+    borderColor: colors.borderStrong,
+    borderRadius: radius.md,
     paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: "#ffffff",
+    paddingVertical: 13,
+    color: colors.text,
     fontSize: 15,
+    fontWeight: "600",
   },
   textArea: {
-    minHeight: 80,
+    minHeight: 84,
     textAlignVertical: "top",
   },
   stepperRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#0e1524",
-    borderRadius: 12,
+    backgroundColor: colors.cardSoft,
+    borderRadius: radius.lg,
     padding: 6,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
+    borderColor: colors.border,
   },
   stepBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 10,
-    backgroundColor: "#1c273c",
+    width: 46,
+    height: 46,
+    borderRadius: radius.md,
+    backgroundColor: colors.card,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadow.soft,
   },
   stepBtnText: {
-    color: "#ffffff",
+    color: colors.text,
     fontSize: 22,
     fontWeight: "700",
   },
@@ -432,13 +472,14 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   countText: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "800",
-    color: "#10b981",
+    color: colors.primary,
+    letterSpacing: -0.5,
   },
   countUnit: {
     fontSize: 13,
-    color: "#94a3b8",
+    color: colors.textMuted,
     fontWeight: "600",
   },
   switchRow: {
@@ -448,54 +489,61 @@ const styles = StyleSheet.create({
   },
   switchTitle: {
     fontSize: 15,
-    fontWeight: "700",
-    color: "#ffffff",
+    fontWeight: "800",
+    color: colors.text,
   },
   switchSub: {
     fontSize: 12,
-    color: "#64748b",
-    marginTop: 2,
+    color: colors.textMuted,
+    marginTop: 3,
   },
   daysContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
-    marginTop: 16,
-    paddingTop: 14,
+    marginTop: 18,
+    paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: "rgba(255, 255, 255, 0.06)",
+    borderTopColor: colors.border,
   },
   dayChip: {
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    backgroundColor: "#0e1524",
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: radius.pill,
+    backgroundColor: colors.cardSoft,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
+    borderColor: colors.border,
   },
   dayChipActive: {
-    backgroundColor: "rgba(16, 185, 129, 0.15)",
-    borderColor: "#10b981",
+    backgroundColor: colors.navy,
+    borderColor: colors.navy,
   },
   dayChipText: {
     fontSize: 12,
-    color: "#94a3b8",
+    color: colors.textMuted,
     fontWeight: "600",
   },
   dayChipTextActive: {
-    color: "#10b981",
-    fontWeight: "700",
+    color: colors.textInverse,
+    fontWeight: "800",
   },
   submitBtn: {
-    backgroundColor: "#10b981",
-    borderRadius: 14,
-    paddingVertical: 16,
+    borderRadius: radius.lg,
     alignItems: "center",
     marginTop: 4,
+    overflow: "hidden",
+    ...shadow.button,
+  },
+  submitBtnGradient: {
+    paddingVertical: 17,
+    borderRadius: radius.lg,
+    alignItems: "center",
+    width: "100%",
   },
   submitBtnText: {
-    color: "#0b0f19",
+    color: colors.textInverse,
     fontSize: 16,
     fontWeight: "800",
+    letterSpacing: 0.3,
   },
 });

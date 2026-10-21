@@ -11,9 +11,11 @@ import {
   ScrollView,
   Alert
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useAuthStore } from "../../src/store/authStore";
 import { useI18n } from "../../src/i18n";
 import { Language } from "../../src/i18n/translations";
+import { colors, gradients, radius, shadow, spacing } from "../../src/theme";
 
 export default function LoginScreen() {
   const { signIn, signUp, isLoading, error, clearError } = useAuthStore();
@@ -54,6 +56,12 @@ export default function LoginScreen() {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      <LinearGradient
+        colors={gradients.screen}
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.4, y: 1 }}
+      />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Language selector in top corner */}
         <View style={styles.langRow}>
@@ -82,9 +90,14 @@ export default function LoginScreen() {
 
         {/* Brand header */}
         <View style={styles.brandContainer}>
-          <View style={styles.logoBadge}>
+          <LinearGradient
+            colors={gradients.navy}
+            style={styles.logoBadge}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
             <Text style={styles.logoText}>C</Text>
-          </View>
+          </LinearGradient>
           <Text style={styles.appName}>ConnectMe</Text>
           <Text style={styles.title}>{t("loginTitle")}</Text>
           <Text style={styles.subtitle}>{t("loginSubtitle")}</Text>
@@ -92,76 +105,90 @@ export default function LoginScreen() {
 
         {/* Card Form */}
         <View style={styles.card}>
-          {error && (
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          )}
+          <LinearGradient
+            colors={gradients.card}
+            style={styles.cardGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0.6, y: 1 }}
+          >
+            {error && (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
 
-          {isRegister && (
+            {isRegister && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>{t("namePlaceholder")}</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder={t("namePlaceholder")}
+                  placeholderTextColor="#64748b"
+                  value={displayName}
+                  onChangeText={setDisplayName}
+                  autoCapitalize="words"
+                />
+              </View>
+            )}
+
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>{t("namePlaceholder")}</Text>
+              <Text style={styles.label}>{t("emailPlaceholder")}</Text>
               <TextInput
                 style={styles.input}
-                placeholder={t("namePlaceholder")}
+                placeholder={t("emailPlaceholder")}
                 placeholderTextColor="#64748b"
-                value={displayName}
-                onChangeText={setDisplayName}
-                autoCapitalize="words"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
               />
             </View>
-          )}
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>{t("emailPlaceholder")}</Text>
-            <TextInput
-              style={styles.input}
-              placeholder={t("emailPlaceholder")}
-              placeholderTextColor="#64748b"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{t("passwordPlaceholder")}</Text>
+              <TextInput
+                style={styles.input}
+                placeholder={t("passwordPlaceholder")}
+                placeholderTextColor="#64748b"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+            </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>{t("passwordPlaceholder")}</Text>
-            <TextInput
-              style={styles.input}
-              placeholder={t("passwordPlaceholder")}
-              placeholderTextColor="#64748b"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-          </View>
+            <TouchableOpacity
+              style={styles.submitBtn}
+              onPress={handleSubmit}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color={colors.textInverse} />
+              ) : (
+                <LinearGradient
+                  colors={gradients.navy}
+                  style={styles.submitBtnGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Text style={styles.submitBtnText}>
+                    {isRegister ? t("signUp") : t("signIn")}
+                  </Text>
+                </LinearGradient>
+              )}
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.submitBtn}
-            onPress={handleSubmit}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#0b0f19" />
-            ) : (
-              <Text style={styles.submitBtnText}>
-                {isRegister ? t("signUp") : t("signIn")}
+            <TouchableOpacity
+              style={styles.switchModeBtn}
+              onPress={() => {
+                clearError();
+                setIsRegister(!isRegister);
+              }}
+            >
+              <Text style={styles.switchModeText}>
+                {isRegister ? t("haveAccount") : t("dontHaveAccount")}
               </Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.switchModeBtn}
-            onPress={() => {
-              clearError();
-              setIsRegister(!isRegister);
-            }}
-          >
-            <Text style={styles.switchModeText}>
-              {isRegister ? t("haveAccount") : t("dontHaveAccount")}
-            </Text>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          </LinearGradient>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -171,147 +198,151 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0b0f19",
+    backgroundColor: colors.bgTop,
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: "center",
-    padding: 20,
+    padding: spacing.lg,
     paddingTop: 50,
   },
   langRow: {
     alignItems: "flex-end",
-    marginBottom: 20,
+    marginBottom: spacing.lg,
   },
   langSelector: {
     flexDirection: "row",
-    backgroundColor: "#151d2d",
-    borderRadius: 20,
-    padding: 3,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
+    backgroundColor: colors.card,
+    borderRadius: radius.pill,
+    padding: 4,
+    ...shadow.card,
   },
   langBtn: {
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: radius.pill,
   },
   langBtnActive: {
-    backgroundColor: "#25334c",
+    backgroundColor: colors.navy,
   },
   langText: {
-    color: "#64748b",
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: "700",
   },
   langTextActive: {
-    color: "#f8fafc",
+    color: colors.textInverse,
   },
   brandContainer: {
     alignItems: "center",
-    marginBottom: 28,
+    marginBottom: spacing.xl,
   },
   logoBadge: {
-    width: 52,
-    height: 52,
-    borderRadius: 15,
-    backgroundColor: "#10b981",
+    width: 56,
+    height: 56,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
-    shadowColor: "#10b981",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 8,
+    marginBottom: 14,
+    ...shadow.button,
   },
   logoText: {
     fontSize: 28,
     fontWeight: "900",
-    color: "#ffffff",
+    color: colors.textInverse,
+    letterSpacing: -0.5,
   },
   appName: {
-    fontSize: 26,
+    fontSize: 27,
     fontWeight: "800",
-    color: "#ffffff",
-    letterSpacing: -0.5,
+    color: colors.text,
+    letterSpacing: -0.8,
   },
   title: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#cbd5e1",
-    marginTop: 6,
+    color: colors.textMuted,
+    marginTop: 8,
   },
   subtitle: {
     fontSize: 13,
-    color: "#64748b",
+    color: colors.textSubtle,
     textAlign: "center",
-    marginTop: 4,
+    marginTop: 6,
     maxWidth: 280,
+    lineHeight: 19,
   },
   card: {
-    backgroundColor: "#151d2d",
-    borderRadius: 20,
-    padding: 22,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 10,
+    borderRadius: radius.xl,
+    ...shadow.card,
+    overflow: "hidden",
+  },
+  cardGradient: {
+    padding: 24,
+    borderRadius: radius.xl,
   },
   errorBox: {
-    backgroundColor: "rgba(239, 68, 68, 0.15)",
+    backgroundColor: colors.dangerSoft,
     borderWidth: 1,
-    borderColor: "rgba(239, 68, 68, 0.3)",
+    borderColor: colors.dangerBorder,
     padding: 12,
-    borderRadius: 12,
+    borderRadius: radius.md,
     marginBottom: 16,
   },
   errorText: {
-    color: "#f87171",
+    color: colors.danger,
     fontSize: 13,
     lineHeight: 18,
+    fontWeight: "600",
   },
   inputGroup: {
-    marginBottom: 14,
+    marginBottom: 16,
   },
   label: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#94a3b8",
-    marginBottom: 6,
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.7,
+    color: colors.textSubtle,
+    marginBottom: 8,
   },
   input: {
-    backgroundColor: "#0e1524",
+    backgroundColor: colors.cardSoft,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    borderRadius: 12,
+    borderColor: colors.borderStrong,
+    borderRadius: radius.md,
     paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: "#ffffff",
+    paddingVertical: 13,
+    color: colors.text,
     fontSize: 15,
+    fontWeight: "600",
   },
   submitBtn: {
-    backgroundColor: "#10b981",
-    borderRadius: 12,
-    paddingVertical: 15,
+    borderRadius: radius.md,
     alignItems: "center",
     marginTop: 8,
+    overflow: "hidden",
+    ...shadow.button,
+  },
+  submitBtnGradient: {
+    paddingVertical: 16,
+    borderRadius: radius.md,
+    alignItems: "center",
+    width: "100%",
   },
   submitBtnText: {
-    color: "#0b0f19",
+    color: colors.textInverse,
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
+    letterSpacing: 0.3,
   },
   switchModeBtn: {
     marginTop: 18,
     alignItems: "center",
   },
   switchModeText: {
-    color: "#38bdf8",
-    fontSize: 13,
-    fontWeight: "600",
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: "700",
   },
 });

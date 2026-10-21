@@ -1,7 +1,8 @@
 import React from "react";
 import { Tabs } from "expo-router";
-import { Text } from "react-native";
+import { Feather } from "@expo/vector-icons";
 import { useI18n } from "../../src/i18n";
+import { colors, radius, shadow } from "../../src/theme";
 
 export default function TabLayout() {
   const { t } = useI18n();
@@ -10,27 +11,34 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerStyle: {
-          backgroundColor: "#0b0f19",
-          borderBottomWidth: 1,
-          borderBottomColor: "rgba(255, 255, 255, 0.08)",
+          backgroundColor: colors.card,
+          borderBottomWidth: 0,
+          ...shadow.soft,
         },
-        headerTintColor: "#f8fafc",
+        headerTintColor: colors.text,
         headerTitleStyle: {
           fontWeight: "800",
           fontSize: 18,
+          letterSpacing: -0.3,
         },
         tabBarStyle: {
-          backgroundColor: "#0e1524",
-          borderTopColor: "rgba(255, 255, 255, 0.08)",
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
+          backgroundColor: colors.card,
+          borderTopWidth: 0,
+          height: 80,
+          paddingBottom: 12,
+          paddingTop: 10,
+          ...shadow.card,
         },
-        tabBarActiveTintColor: "#10b981",
-        tabBarInactiveTintColor: "#64748b",
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSubtle,
         tabBarLabelStyle: {
           fontSize: 12,
-          fontWeight: "600",
+          fontWeight: "700",
+          letterSpacing: 0.2,
+        },
+        tabBarItemStyle: {
+          borderRadius: radius.md,
+          paddingVertical: 0,
         },
       }}
     >
@@ -39,8 +47,13 @@ export default function TabLayout() {
         options={{
           title: t("myEvents"),
           tabBarLabel: t("myEvents"),
-          tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 20, color }}>📅</Text>
+          tabBarIcon: ({ color, focused }) => (
+            <Feather
+              name="calendar"
+              size={21}
+              color={color as string}
+              strokeWidth={focused ? 2.4 : 1.9}
+            />
           ),
         }}
       />
@@ -49,8 +62,13 @@ export default function TabLayout() {
         options={{
           title: t("profile"),
           tabBarLabel: t("profile"),
-          tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 20, color }}>👤</Text>
+          tabBarIcon: ({ color, focused }) => (
+            <Feather
+              name="user"
+              size={21}
+              color={color as string}
+              strokeWidth={focused ? 2.4 : 1.9}
+            />
           ),
         }}
       />

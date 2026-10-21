@@ -1,35 +1,41 @@
 :root {
-  --bg-primary: #0b0f19;
-  --bg-card: #151d2d;
-  --bg-card-subtle: #1c273c;
-  --bg-input: #0e1524;
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-focus: #3b82f6;
+  --bg-primary: #e9f0f9;
+  --bg-card: #ffffff;
+  --bg-card-subtle: #f6f9fd;
+  --bg-input: #f6f9fd;
+  --border-subtle: #e8eef6;
+  --border-focus: #0284c7;
 
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --text-subtle: #64748b;
+  --text-main: #0b1b33;
+  --text-muted: #5b6b81;
+  --text-subtle: #93a3b8;
 
-  --color-primary: #10b981;
-  --color-primary-hover: #059669;
-  --color-primary-bg: rgba(16, 185, 129, 0.12);
+  --color-primary: #0284c7;
+  --color-primary-hover: #0369a1;
+  --color-primary-bg: rgba(2, 132, 199, 0.1);
 
-  --color-danger: #ef4444;
-  --color-danger-hover: #dc2626;
-  --color-danger-bg: rgba(239, 68, 68, 0.12);
+  --color-navy: #0a1f3c;
+  --color-navy-soft: #12325f;
 
-  --color-warning: #f59e0b;
+  --color-danger: #b91c1c;
+  --color-danger-hover: #991b1b;
+  --color-danger-bg: rgba(220, 38, 38, 0.1);
+
+  --color-warning: #b45309;
   --color-warning-bg: rgba(245, 158, 11, 0.12);
 
-  --color-blue: #3b82f6;
-  --color-blue-bg: rgba(59, 130, 246, 0.12);
+  --color-blue: #0284c7;
+  --color-blue-bg: rgba(2, 132, 199, 0.1);
 
   --radius-sm: 8px;
   --radius-md: 14px;
-  --radius-lg: 20px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
   --radius-full: 9999px;
 
-  --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 10px 30px -8px rgba(11, 27, 51, 0.12), 0 4px 10px -4px rgba(11, 27, 51, 0.06);
+  --shadow-soft: 0 2px 10px -2px rgba(11, 27, 51, 0.08);
+  --shadow-button: 0 6px 16px -4px rgba(10, 31, 60, 0.3);
   --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -40,7 +46,8 @@
 }
 
 body {
-  background-color: var(--bg-primary);
+  background: linear-gradient(180deg, #e9f0f9 0%, #f8fbfe 100%);
+  background-attachment: fixed;
   color: var(--text-main);
   font-family: var(--font-family);
   min-height: 100vh;
@@ -77,7 +84,7 @@ body {
 .brand-icon {
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, #10b981, #3b82f6);
+  background: linear-gradient(135deg, #0284c7, #38bdf8);
   border-radius: 9px;
   display: flex;
   align-items: center;
@@ -85,14 +92,15 @@ body {
   color: #fff;
   font-weight: 800;
   font-size: 18px;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
 }
 
 .brand-text {
   font-size: 20px;
   font-weight: 700;
-  color: #fff;
-  letter-spacing: -0.5px;
+  color: var(--text-main);
+  letter-spacing: -0.6px;
+  font-weight: 800;
 }
 
 /* Language selector */
@@ -101,8 +109,10 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-full);
-  padding: 3px;
+  padding: 4px;
   gap: 2px;
+  box-shadow: var(--shadow-soft);
+  border-color: transparent;
 }
 
 .lang-btn {
@@ -119,8 +129,9 @@ body {
 }
 
 .lang-btn.active {
-  background: #25334c;
+  background: var(--color-navy);
   color: #fff;
+  box-shadow: var(--shadow-button);
 }
 
 .lang-btn:hover:not(.active) {
@@ -129,10 +140,10 @@ body {
 
 /* Card base */
 .card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 22px;
+  background: linear-gradient(180deg, #f3f9ff 0%, #ffffff 60%);
+  border: none;
+  border-radius: var(--radius-xl);
+  padding: 26px;
   box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
@@ -167,7 +178,7 @@ body {
 .status-badge.open {
   background: var(--color-primary-bg);
   color: var(--color-primary);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: 1px solid rgba(2, 132, 199, 0.3);
 }
 
 .status-badge.confirmed {
@@ -197,10 +208,11 @@ body {
 
 /* Event Title & Meta */
 .event-title {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 800;
-  line-height: 1.25;
-  color: #ffffff;
+  line-height: 1.22;
+  letter-spacing: -0.6px;
+  color: var(--text-main);
   letter-spacing: -0.5px;
 }
 
@@ -281,7 +293,7 @@ body {
 .quorum-numbers {
   font-size: 15px;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-main);
 }
 
 .quorum-numbers span.accent {
@@ -292,14 +304,14 @@ body {
 .progress-bar {
   width: 100%;
   height: 9px;
-  background: rgba(255, 255, 255, 0.08);
+  background: #dae4f0;
   border-radius: var(--radius-full);
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #10b981, #3b82f6);
+  background: linear-gradient(90deg, #0284c7, #38bdf8);
   border-radius: var(--radius-full);
   transition: width 0.4s ease;
 }
@@ -313,14 +325,17 @@ body {
 
 /* RSVP Action Form */
 .rsvp-card {
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  background: linear-gradient(180deg, #162235, #121927);
+  border: none;
+  background: linear-gradient(180deg, #f3f9ff 0%, #ffffff 60%);
+  box-shadow: var(--shadow-card);
 }
 
 .card-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  color: var(--text-muted);
 }
 
 .form-group {
@@ -341,7 +356,8 @@ body {
   border-radius: var(--radius-md);
   padding: 13px 14px;
   font-size: 15px;
-  color: #fff;
+  font-weight: 600;
+  color: var(--text-main);
   outline: none;
   transition: border-color 0.2s ease;
 }
@@ -381,12 +397,13 @@ body {
 }
 
 .btn-primary {
-  background: var(--color-primary);
-  color: #0b0f19;
+  background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy-soft) 100%);
+  color: #fff;
+  box-shadow: var(--shadow-button);
 }
 
 .btn-primary:hover {
-  background: var(--color-primary-hover);
+  background: linear-gradient(135deg, #12325f 0%, #1b4a86 100%);
 }
 
 .btn-danger {
@@ -406,7 +423,7 @@ body {
 }
 
 .btn-outline:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-card-subtle);
   color: var(--text-main);
 }
 
@@ -429,7 +446,7 @@ body {
 
 .rsvp-current.going {
   background: var(--color-primary-bg);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: 1px solid rgba(2, 132, 199, 0.3);
   color: var(--color-primary);
 }
 
@@ -466,13 +483,15 @@ body {
 }
 
 .tab-btn.active {
-  background: #233148;
+  background: var(--color-navy);
   color: #fff;
+  box-shadow: var(--shadow-button);
 }
 
 .tab-count {
   font-size: 11px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
   padding: 2px 7px;
   border-radius: var(--radius-full);
 }
@@ -504,10 +523,11 @@ body {
 }
 
 .avatar-circle {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: #25334c;
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  color: var(--color-navy);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -533,7 +553,7 @@ body {
   text-transform: uppercase;
   padding: 2px 7px;
   border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--bg-card-subtle);
   color: var(--text-subtle);
 }
 
@@ -556,8 +576,9 @@ body {
 
 /* App Install CTA */
 .install-card {
-  background: linear-gradient(135deg, #141c2c, #1a253a);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: linear-gradient(135deg, #0a1f3c 0%, #12325f 100%);
+  border: none;
+  box-shadow: var(--shadow-button);
   text-align: center;
   gap: 12px;
 }
@@ -598,8 +619,9 @@ body {
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%) translateY(100px);
-  background: #1f293d;
+  background: var(--color-navy);
   color: #fff;
+  box-shadow: var(--shadow-button);
   border: 1px solid var(--border-subtle);
   padding: 12px 20px;
   border-radius: var(--radius-full);
@@ -618,8 +640,8 @@ body {
 }
 
 .toast.success {
-  border-color: rgba(16, 185, 129, 0.4);
-  color: #34d399;
+  border-color: rgba(2, 132, 199, 0.4);
+  color: #38bdf8;
 }
 
 .toast.error {
@@ -640,7 +662,7 @@ body {
 .spinner {
   width: 36px;
   height: 36px;
-  border: 3px solid rgba(255, 255, 255, 0.1);
+  border: 3px solid #dae4f0;
   border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;

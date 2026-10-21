@@ -9,6 +9,8 @@ import {
   Share,
   Alert
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { doc, onSnapshot, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../src/config/firebase";
@@ -19,6 +21,7 @@ import {
   ParticipantItem
 } from "../../src/services/eventsService";
 import { getGuestEventUrl } from "../../src/config/constants";
+import { colors, gradients, radius, shadow, spacing } from "../../src/theme";
 
 export default function EventDetailScreen() {
   const router = useRouter();
@@ -107,7 +110,7 @@ export default function EventDetailScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#10b981" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -142,321 +145,402 @@ export default function EventDetailScreen() {
   const percent = Math.min(100, Math.round((goingList.length / required) * 100));
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={gradients.screen}
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.4, y: 1 }}
+      />
+      <ScrollView contentContainerStyle={styles.content}>
       {/* Event Header Card */}
       <View style={styles.card}>
-        <View style={styles.titleRow}>
-          <Text style={styles.title}>{event.title}</Text>
-          {isCreator && (
-            <TouchableOpacity
-              style={styles.editBtn}
-              onPress={() => router.push(`/event/create?editId=${id}`)}
-            >
-              <Text style={styles.editBtnText}>✏️ {t("editEvent")}</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {event.description ? (
-          <Text style={styles.description}>{event.description}</Text>
-        ) : null}
-
-        <View style={styles.metaRow}>
-          <Text style={styles.metaIcon}>📅</Text>
-          <View>
-            <Text style={styles.metaLabel}>{t("when")}</Text>
-            <Text style={styles.metaValue}>{dateStr}</Text>
+        <LinearGradient
+          colors={gradients.card}
+          style={styles.cardGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0.6, y: 1 }}
+        >
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>{event.title}</Text>
+            {isCreator && (
+              <TouchableOpacity
+                style={styles.editBtn}
+                onPress={() => router.push(`/event/create?editId=${id}`)}
+              >
+                <View style={styles.editBtnInner}>
+                  <Feather name="edit-2" size={13} color={colors.textMuted} />
+                  <Text style={styles.editBtnText}>{t("editEvent")}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
           </View>
-        </View>
 
-        <View style={styles.metaRow}>
-          <Text style={styles.metaIcon}>📍</Text>
-          <View>
-            <Text style={styles.metaLabel}>{t("where")}</Text>
-            <Text style={styles.metaValue}>{event.location}</Text>
-          </View>
-        </View>
+          {event.description ? (
+            <Text style={styles.description}>{event.description}</Text>
+          ) : null}
 
-        <View style={styles.metaRow}>
-          <Text style={styles.metaIcon}>👤</Text>
-          <View>
-            <Text style={styles.metaLabel}>{t("organized")}</Text>
-            <Text style={styles.metaValue}>{creatorDisplayName || event.creatorName || ""}</Text>
+          <View style={styles.metaRow}>
+            <View style={styles.metaIconBox}>
+              <Feather name="calendar" size={15} color={colors.accentDeep} />
+            </View>
+            <View>
+              <Text style={styles.metaLabel}>{t("when")}</Text>
+              <Text style={styles.metaValue}>{dateStr}</Text>
+            </View>
           </View>
-        </View>
 
-        {/* Quorum status */}
-        <View style={styles.quorumBox}>
-          <View style={styles.quorumHeader}>
-            <Text style={styles.quorumTitle}>
-              {t("needed")}: {goingList.length} / {required} {t("people")}
-            </Text>
-            <Text style={styles.quorumHighlight}>
-              {required - goingList.length > 0
-                ? `${t("spotsLeft")}: ${required - goingList.length}`
-                : `🎉 ${t("quorumReached")}`}
-            </Text>
+          <View style={styles.metaRow}>
+            <View style={styles.metaIconBox}>
+              <Feather name="map-pin" size={15} color={colors.accentDeep} />
+            </View>
+            <View>
+              <Text style={styles.metaLabel}>{t("where")}</Text>
+              <Text style={styles.metaValue}>{event.location}</Text>
+            </View>
           </View>
-          <View style={styles.progressBar}>
-            <View
-              style={[
-                styles.progressFill,
-                { width: `${Math.max(5, percent)}%` },
-              ]}
-            />
-          </View>
-        </View>
 
-        {/* Share Guest Link Button */}
-        <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
-          <Text style={styles.shareBtnText}>🔗 {t("shareLink")}</Text>
-        </TouchableOpacity>
+          <View style={styles.metaRow}>
+            <View style={styles.metaIconBox}>
+              <Feather name="user" size={15} color={colors.accentDeep} />
+            </View>
+            <View>
+              <Text style={styles.metaLabel}>{t("organized")}</Text>
+              <Text style={styles.metaValue}>{creatorDisplayName || event.creatorName || ""}</Text>
+            </View>
+          </View>
+
+          {/* Quorum status */}
+          <View style={styles.quorumBox}>
+            <View style={styles.quorumHeader}>
+              <Text style={styles.quorumTitle}>
+                {t("needed")}: {goingList.length} / {required} {t("people")}
+              </Text>
+              <Text style={styles.quorumHighlight}>
+                {required - goingList.length > 0
+                  ? `${t("spotsLeft")}: ${required - goingList.length}`
+                  : `🎉 ${t("quorumReached")}`}
+              </Text>
+            </View>
+            <View style={styles.progressBar}>
+              <View
+                style={[
+                  styles.progressFill,
+                  { width: `${Math.max(5, percent)}%` },
+                ]}
+              />
+            </View>
+          </View>
+
+          {/* Share Guest Link Button */}
+          <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
+            <View style={styles.shareBtnInner}>
+              <Feather name="link-2" size={15} color={colors.accentDeep} />
+              <Text style={styles.shareBtnText}>{t("shareLink")}</Text>
+            </View>
+          </TouchableOpacity>
+        </LinearGradient>
       </View>
 
       {/* RSVP Action for current user */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Twoja obecność</Text>
-        {myParticipant ? (
-          <View style={styles.myRsvpBox}>
-            <Text style={styles.myRsvpText}>
-              {myParticipant.status === "going" || myParticipant.status === "confirmed"
-                ? "✓ Twój status: Będę obecny"
-                : "✗ Twój status: Nie dam rady"}
-            </Text>
-            <View style={styles.rsvpBtnRow}>
-              <TouchableOpacity
-                style={[
-                  styles.rsvpSmallBtn,
-                  myParticipant.status === "going" && styles.rsvpSmallBtnActive,
-                ]}
-                disabled={savingRsvp}
-                onPress={() => handleRsvp("going")}
-              >
-                <Text style={styles.rsvpSmallBtnText}>👍 Będę</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.rsvpSmallBtn,
-                  myParticipant.status === "not_going" && styles.rsvpSmallBtnDanger,
-                ]}
-                disabled={savingRsvp}
-                onPress={() => handleRsvp("not_going")}
-              >
-                <Text style={styles.rsvpSmallBtnText}>👎 Nie dam rady</Text>
-              </TouchableOpacity>
+        <LinearGradient
+          colors={gradients.card}
+          style={styles.cardGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0.6, y: 1 }}
+        >
+          <Text style={styles.cardTitle}>Twoja obecność</Text>
+          {myParticipant ? (
+            <View style={styles.myRsvpBox}>
+              <Text style={styles.myRsvpText}>
+                {myParticipant.status === "going" || myParticipant.status === "confirmed"
+                  ? "✓ Twój status: Będę obecny"
+                  : "✗ Twój status: Nie dam rady"}
+              </Text>
+              <View style={styles.rsvpBtnRow}>
+                <TouchableOpacity
+                  style={[
+                    styles.rsvpSmallBtn,
+                    myParticipant.status === "going" && styles.rsvpSmallBtnActive,
+                  ]}
+                  disabled={savingRsvp}
+                  onPress={() => handleRsvp("going")}
+                >
+                  <View style={styles.rsvpSmallBtnInner}>
+                    <Feather name="check" size={14} color={colors.textMuted} />
+                    <Text style={styles.rsvpSmallBtnText}>Będę</Text>
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.rsvpSmallBtn,
+                    myParticipant.status === "not_going" && styles.rsvpSmallBtnDanger,
+                  ]}
+                  disabled={savingRsvp}
+                  onPress={() => handleRsvp("not_going")}
+                >
+                  <View style={styles.rsvpSmallBtnInner}>
+                    <Feather name="x" size={14} color={colors.textMuted} />
+                    <Text style={styles.rsvpSmallBtnText}>Nie dam rady</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        ) : (
+          ) : (
           <View style={styles.rsvpBtnRow}>
             <TouchableOpacity
               style={[styles.rsvpActionBtn, styles.rsvpActionGoing]}
               disabled={savingRsvp}
               onPress={() => handleRsvp("going")}
             >
-              <Text style={styles.rsvpActionText}>👍 Będę</Text>
+              <LinearGradient
+                colors={gradients.navy}
+                style={styles.rsvpActionGoingGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.rsvpActionInner}>
+                  <Feather name="check" size={16} color={colors.textInverse} />
+                  <Text style={styles.rsvpActionText}>Będę</Text>
+                </View>
+              </LinearGradient>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.rsvpActionBtn, styles.rsvpActionNotGoing]}
               disabled={savingRsvp}
               onPress={() => handleRsvp("not_going")}
             >
-              <Text style={styles.rsvpActionText}>👎 Nie dam rady</Text>
+              <View style={styles.rsvpActionInner}>
+                <Feather name="x" size={16} color={colors.danger} />
+                <Text style={[styles.rsvpActionText, styles.rsvpActionTextDanger]}>Nie dam rady</Text>
+              </View>
             </TouchableOpacity>
           </View>
-        )}
+          )}
+        </LinearGradient>
       </View>
 
       {/* Participants Card */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>
-          {t("participants")} ({participants.length})
-        </Text>
+        <LinearGradient
+          colors={gradients.card}
+          style={styles.cardGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0.6, y: 1 }}
+        >
+          <Text style={styles.cardTitle}>
+            {t("participants")} ({participants.length})
+          </Text>
 
-        {participants.length === 0 ? (
-          <Text style={styles.noPartsText}>{t("noEventsDesc")}</Text>
-        ) : (
-          participants.map((p) => {
-            const isGoing = p.status === "going" || p.status === "confirmed";
-            return (
-              <View key={p.id} style={styles.partItem}>
-                <View style={styles.partLeft}>
-                  <View style={styles.partAvatar}>
-                    <Text style={styles.partAvatarText}>
-                      {(p.displayName || "?").charAt(0).toUpperCase()}
-                    </Text>
+          {participants.length === 0 ? (
+            <Text style={styles.noPartsText}>{t("noEventsDesc")}</Text>
+          ) : (
+            participants.map((p) => {
+              const isGoing = p.status === "going" || p.status === "confirmed";
+              return (
+                <View key={p.id} style={styles.partItem}>
+                  <View style={styles.partLeft}>
+                    <View style={styles.partAvatar}>
+                      <Text style={styles.partAvatarText}>
+                        {(p.displayName || "?").charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text style={styles.partName}>{p.displayName}</Text>
+                      <Text style={styles.partType}>
+                        {p.isGuest ? "Gość / Guest" : "Klubowicz / Member"}
+                      </Text>
+                    </View>
                   </View>
-                  <View>
-                    <Text style={styles.partName}>{p.displayName}</Text>
-                    <Text style={styles.partType}>
-                      {p.isGuest ? "Gość / Guest" : "Klubowicz / Member"}
-                    </Text>
-                  </View>
-                </View>
-                <View
-                  style={[
-                    styles.statusPill,
-                    isGoing ? styles.statusPillGoing : styles.statusPillNotGoing,
-                  ]}
-                >
-                  <Text
+                  <View
                     style={[
-                      styles.statusPillText,
-                      isGoing ? styles.statusPillTextGoing : styles.statusPillTextNotGoing,
+                      styles.statusPill,
+                      isGoing ? styles.statusPillGoing : styles.statusPillNotGoing,
                     ]}
                   >
-                    {isGoing ? "✓ Będzie" : "✗ Nie będzie"}
-                  </Text>
+                    <Text
+                      style={[
+                        styles.statusPillText,
+                        isGoing ? styles.statusPillTextGoing : styles.statusPillTextNotGoing,
+                      ]}
+                    >
+                      {isGoing ? "✓ Będzie" : "✗ Nie będzie"}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            );
-          })
-        )}
+              );
+            })
+          )}
+        </LinearGradient>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0b0f19",
+    backgroundColor: colors.bgTop,
   },
   content: {
-    padding: 16,
-    gap: 16,
-    paddingBottom: 36,
+    padding: spacing.md,
+    gap: spacing.md,
+    paddingBottom: spacing.xl * 1.5,
   },
   center: {
     flex: 1,
-    backgroundColor: "#0b0f19",
+    backgroundColor: colors.bgTop,
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
   },
   card: {
-    backgroundColor: "#151d2d",
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
+    borderRadius: radius.xl,
+    ...shadow.card,
+    overflow: "hidden",
+  },
+  cardGradient: {
+    padding: 22,
+    borderRadius: radius.xl,
   },
   titleRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 8,
+    marginBottom: 10,
     gap: 12,
   },
   title: {
     flex: 1,
-    fontSize: 22,
+    fontSize: 23,
     fontWeight: "800",
-    color: "#ffffff",
+    color: colors.text,
+    letterSpacing: -0.5,
   },
   editBtn: {
-    backgroundColor: "#1c273c",
+    backgroundColor: colors.cardSoft,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
-    paddingVertical: 6,
+    borderColor: colors.border,
+    paddingVertical: 7,
     paddingHorizontal: 12,
-    borderRadius: 12,
+    borderRadius: radius.pill,
+  },
+  editBtnInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
   },
   editBtnText: {
-    color: "#cbd5e1",
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: "700",
   },
+  metaIconBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    backgroundColor: colors.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   description: {
     fontSize: 14,
-    color: "#94a3b8",
-    lineHeight: 20,
-    marginBottom: 16,
+    color: colors.textMuted,
+    lineHeight: 21,
+    marginBottom: 18,
   },
   metaRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 12,
-    marginBottom: 12,
-  },
-  metaIcon: {
-    fontSize: 16,
-    marginTop: 2,
+    marginBottom: 14,
   },
   metaLabel: {
-    fontSize: 11,
-    color: "#64748b",
+    fontSize: 10,
+    color: colors.textSubtle,
     textTransform: "uppercase",
-    fontWeight: "600",
+    fontWeight: "800",
+    letterSpacing: 0.8,
   },
   metaValue: {
     fontSize: 14,
-    color: "#ffffff",
-    fontWeight: "600",
-    marginTop: 2,
+    color: colors.text,
+    fontWeight: "700",
+    marginTop: 3,
   },
   quorumBox: {
-    backgroundColor: "#1c273c",
-    borderRadius: 14,
-    padding: 14,
-    marginTop: 12,
-    marginBottom: 14,
+    backgroundColor: colors.cardSoft,
+    borderRadius: radius.lg,
+    padding: 16,
+    marginTop: 14,
+    marginBottom: 16,
   },
   quorumHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "baseline",
-    marginBottom: 8,
+    marginBottom: 10,
   },
   quorumTitle: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#ffffff",
+    color: colors.text,
   },
   quorumHighlight: {
     fontSize: 12,
-    fontWeight: "700",
-    color: "#10b981",
+    fontWeight: "800",
+    color: colors.primary,
   },
   progressBar: {
     height: 8,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    borderRadius: 10,
+    backgroundColor: colors.borderStrong,
+    borderRadius: radius.pill,
     overflow: "hidden",
   },
   progressFill: {
     height: "100%",
-    backgroundColor: "#10b981",
-    borderRadius: 10,
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
   },
   shareBtn: {
-    backgroundColor: "rgba(59, 130, 246, 0.12)",
+    backgroundColor: colors.primarySoft,
     borderWidth: 1,
-    borderColor: "rgba(59, 130, 246, 0.3)",
-    borderRadius: 12,
-    paddingVertical: 13,
+    borderColor: colors.primarySoftBorder,
+    borderRadius: radius.md,
+    paddingVertical: 14,
     alignItems: "center",
   },
+  shareBtnInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
   shareBtnText: {
-    color: "#38bdf8",
+    color: colors.accentDeep,
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
+    letterSpacing: 0.2,
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#ffffff",
-    marginBottom: 12,
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.9,
+    color: colors.textMuted,
+    marginBottom: 14,
   },
   myRsvpBox: {
-    backgroundColor: "#0e1524",
-    borderRadius: 12,
-    padding: 14,
-    gap: 10,
+    backgroundColor: colors.cardSoft,
+    borderRadius: radius.lg,
+    padding: 16,
+    gap: 12,
   },
   myRsvpText: {
-    color: "#10b981",
+    color: colors.accentDeep,
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   rsvpBtnRow: {
     flexDirection: "row",
@@ -464,52 +548,75 @@ const styles = StyleSheet.create({
   },
   rsvpSmallBtn: {
     flex: 1,
-    backgroundColor: "#1c273c",
-    paddingVertical: 10,
-    borderRadius: 10,
+    backgroundColor: colors.cardSoft,
+    paddingVertical: 11,
+    borderRadius: radius.md,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
   },
   rsvpSmallBtnActive: {
-    backgroundColor: "rgba(16, 185, 129, 0.2)",
+    backgroundColor: colors.primarySoft,
     borderWidth: 1,
-    borderColor: "#10b981",
+    borderColor: colors.primary,
   },
   rsvpSmallBtnDanger: {
-    backgroundColor: "rgba(239, 68, 68, 0.2)",
+    backgroundColor: colors.dangerSoft,
     borderWidth: 1,
-    borderColor: "#ef4444",
+    borderColor: colors.dangerBorder,
   },
   rsvpSmallBtnText: {
-    color: "#ffffff",
+    color: colors.textMuted,
     fontSize: 13,
     fontWeight: "700",
   },
+  rsvpSmallBtnInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   rsvpActionBtn: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingVertical: 15,
+    borderRadius: radius.md,
     alignItems: "center",
+    overflow: "hidden",
   },
   rsvpActionGoing: {
-    backgroundColor: "#10b981",
+    ...shadow.button,
+  },
+  rsvpActionGoingGradient: {
+    paddingVertical: 15,
+    borderRadius: radius.md,
+    alignItems: "center",
+    width: "100%",
   },
   rsvpActionNotGoing: {
-    backgroundColor: "rgba(239, 68, 68, 0.15)",
+    backgroundColor: colors.dangerSoft,
     borderWidth: 1,
-    borderColor: "rgba(239, 68, 68, 0.3)",
+    borderColor: colors.dangerBorder,
   },
   rsvpActionText: {
-    color: "#ffffff",
+    color: colors.textInverse,
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
+    letterSpacing: 0.2,
+  },
+  rsvpActionInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+  rsvpActionTextDanger: {
+    color: colors.danger,
   },
   partItem: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#0e1524",
+    backgroundColor: colors.cardSoft,
     padding: 12,
-    borderRadius: 12,
+    borderRadius: radius.md,
     marginBottom: 8,
   },
   partLeft: {
@@ -518,57 +625,57 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   partAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#25334c",
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.primarySoft,
     alignItems: "center",
     justifyContent: "center",
   },
   partAvatarText: {
-    color: "#ffffff",
-    fontWeight: "700",
+    color: colors.accentDeep,
+    fontWeight: "800",
     fontSize: 14,
   },
   partName: {
-    color: "#ffffff",
-    fontWeight: "600",
+    color: colors.text,
+    fontWeight: "700",
     fontSize: 14,
   },
   partType: {
-    color: "#64748b",
+    color: colors.textSubtle,
     fontSize: 11,
     marginTop: 2,
   },
   statusPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
   },
   statusPillGoing: {
-    backgroundColor: "rgba(16, 185, 129, 0.15)",
+    backgroundColor: colors.primarySoft,
   },
   statusPillNotGoing: {
-    backgroundColor: "rgba(239, 68, 68, 0.15)",
+    backgroundColor: colors.dangerSoft,
   },
   statusPillText: {
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: 11,
+    fontWeight: "800",
   },
   statusPillTextGoing: {
-    color: "#10b981",
+    color: colors.accentDeep,
   },
   statusPillTextNotGoing: {
-    color: "#ef4444",
+    color: colors.danger,
   },
   noPartsText: {
-    color: "#64748b",
+    color: colors.textMuted,
     fontSize: 13,
     textAlign: "center",
     paddingVertical: 12,
   },
   errorText: {
-    color: "#ef4444",
+    color: colors.danger,
     fontSize: 16,
     fontWeight: "600",
   },

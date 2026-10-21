@@ -7,7 +7,7 @@ import {
   signOut as firebaseSignOut,
   updateProfile as firebaseUpdateProfile
 } from "firebase/auth";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp, deleteField } from "firebase/firestore";
 import { auth, db } from "../config/firebase";
 
 export interface UserProfile {
@@ -27,6 +27,7 @@ interface AuthState {
   initAuth: () => () => void;
   signIn: (email: string, pass: string) => Promise<void>;
   signUp: (email: string, pass: string, name: string) => Promise<void>;
+  updateProfile: (name: string, phone?: string) => Promise<void>;
   signOut: () => Promise<void>;
   clearError: () => void;
 }
@@ -51,13 +52,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           if (snap.exists()) {
             set({ profile: snap.data() as UserProfile, isLoading: false });
           } else {
-            // Initialize user doc conforming to firestore.rules
+            // Initialize user doc conforming to firestore.rules.
+            // Undefined values are not allowed by the Firestore SDK, so only
+            // present fields are written.
             const newProfile: UserProfile = {
               displayName: user.displayName || user.email?.split("@")[0] || "User",
-              email: user.email || undefined,
               reliabilityScore: 1.0,
               createdAt: serverTimestamp(),
             };
+            if (user.email) newProfile.email = user.email;
             await setDoc(userDocRef, newProfile);
             set({ profile: newProfile, isLoading: false });
           }
@@ -101,6 +104,47 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ profile: newProfile, user: cred.user, isLoading: false });
     } catch (e: any) {
       set({ error: e.message || "Failed to sign up", isLoading: false });
+      throw e;
+    }
+  },
+
+  updateProfile: async (name: string, phone?: string) => {
+    const { user, profile } = get();
+    if (!user) {
+      set({ error: "Not authenticated" });
+      throw new Error("Not authenticated");
+    }
+    set({ error: null });
+    try {
+      const cleanName = name.trim();
+      const cleanPhone = (phone || "").trim();
+
+      // Firestore is the source of truth. Never send `undefined` values:
+      // the Firestore SDK rejects them ("Unsupported field value: undefined").
+      // Clearing the phone is done with deleteField() so the key is removed.
+      const userDocRef = doc(db, "users", user.uid);
+      const payload: Record<string, unknown> = {
+        displayName: cleanName,
+        updatedAt: serverTimestamp(),
+        phone: cleanPhone ? cleanPhone : deleteField(),
+      };
+      await setDoc(userDocRef, payload, { merge: true });
+
+      // Firebase Auth is secondary - it can require a recent login, which must
+      // not block the actual profile update.
+      try {
+        await firebaseUpdateProfile(user, { displayName: cleanName });
+      } catch (authError: any) {
+        console.warn("Auth displayName update skipped:", authError?.message);
+      }
+
+      set({
+        profile: profile
+          ? { ...profile, displayName: cleanName, phone: cleanPhone || undefined }
+          : null,
+      });
+    } catch (e: any) {
+      set({ error: e.message || "Failed to update profile" });
       throw e;
     }
   },

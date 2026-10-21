@@ -5,6 +5,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAuthStore } from "../src/store/authStore";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
+import { colors } from "../src/theme";
 
 const queryClient = new QueryClient();
 
@@ -35,7 +36,7 @@ function NavigationGuard() {
   if (isLoading) {
     return (
       <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#10b981" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -43,10 +44,11 @@ function NavigationGuard() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: "#0b0f19" },
-        headerTintColor: "#f8fafc",
-        headerTitleStyle: { fontWeight: "700" },
-        contentStyle: { backgroundColor: "#0b0f19" },
+        headerStyle: { backgroundColor: colors.card },
+        headerTintColor: colors.text,
+        headerTitleStyle: { fontWeight: "800" },
+        headerShadowVisible: false,
+        contentStyle: { backgroundColor: colors.bgTop },
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -73,7 +75,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
-        <StatusBar style="light" />
+        <StatusBar style="dark" />
         <NavigationGuard />
       </QueryClientProvider>
     </SafeAreaProvider>
@@ -83,7 +85,7 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   loaderContainer: {
     flex: 1,
-    backgroundColor: "#0b0f19",
+    backgroundColor: colors.bgTop,
     alignItems: "center",
     justifyContent: "center",
   },

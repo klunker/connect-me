@@ -204,11 +204,11 @@ function updateQuorum() {
 
   if (goingCount >= required) {
     quorumFooter.textContent = `🎉 ${t("quorumReached")}`;
-    quorumFill.style.background = "linear-gradient(90deg, #10b981, #059669)";
+    quorumFill.style.background = "linear-gradient(90deg, #0284c7, #0369a1)";
   } else {
     const remaining = required - goingCount;
     quorumFooter.textContent = `${t("remaining")}: ${remaining}`;
-    quorumFill.style.background = "linear-gradient(90deg, #10b981, #3b82f6)";
+    quorumFill.style.background = "linear-gradient(90deg, #0284c7, #38bdf8)";
   }
 }
 
